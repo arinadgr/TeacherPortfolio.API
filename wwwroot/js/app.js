@@ -302,6 +302,28 @@ document.getElementById('exportExcelBtn').addEventListener('click', async () => 
     await downloadFile('/api/StudentAchievements/export-excel', 'achievements-report.xlsx');
 });
 
+document.getElementById('openPassportBtn').addEventListener('click', async () => {
+    await downloadFile('/api/Passport/export-pdf', 'model-passport.pdf');
+});
+
+
+function initializeModuleNavigation() {
+    const tabs = document.querySelectorAll('.module-tab');
+    const sections = document.querySelectorAll('.module-section');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.target;
+            tabs.forEach(x => x.classList.remove('active'));
+            sections.forEach(x => x.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(target)?.classList.add('active');
+        });
+    });
+}
+
+initializeModuleNavigation();
+
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
