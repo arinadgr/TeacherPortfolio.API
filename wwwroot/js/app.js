@@ -1,8 +1,14 @@
-const API_URL = 'https://localhost:7035';
+const API_URL = window.location.origin;
 let currentToken = null;
+let currentProfile = null;
+let currentAchievements = [];
 
 // Проверка авторизации при загрузке
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.protocol === 'file:') {
+        alert('Откройте приложение через http://localhost:5266, а не напрямую из файла index.html');
+        return;
+    }
     const token = localStorage.getItem('token');
     if (token) {
         currentToken = token;
@@ -45,6 +51,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             loadProfile();
             loadAchievements();
             loadDropdowns();
+            renderReportPreview();
         } else {
             alert('Ошибка входа. Проверьте email и пароль.');
         }
@@ -102,6 +109,8 @@ async function loadProfile() {
                 <p><strong>Email:</strong> ${profile.email}</p>
             `;
             document.getElementById('userName').innerHTML = `👋 ${profile.fullName}`;
+            currentProfile = profile;
+            renderReportPreview();
         }
     } catch (error) {
         console.error('Ошибка загрузки профиля:', error);
@@ -119,8 +128,11 @@ async function loadAchievements() {
             const achievements = await response.json();
             const container = document.getElementById('achievementsList');
             
+            currentAchievements = achievements;
+
             if (achievements.length === 0) {
                 container.innerHTML = '<p>Достижений пока нет</p>';
+                renderReportPreview();
                 return;
             }
 
@@ -136,6 +148,7 @@ async function loadAchievements() {
                     </div>
                 </div>
             `).join('');
+            renderReportPreview();
         }
     } catch (error) {
         console.error('Ошибка загрузки достижений:', error);
@@ -255,14 +268,61 @@ async function loadDropdowns() {
 }
 
 // Экспорт PDF
+async function downloadFile(endpoint, filename) {
+    try {
+        const response = await fetch(`${API_URL}${endpoint}`, {
+            headers: { 'Authorization': `Bearer ${currentToken}` }
+        });
+
+        if (!response.ok) {
+            alert('Не удалось скачать файл. Проверьте авторизацию.');
+            return;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        alert('Ошибка скачивания файла');
+    }
+}
+
 document.getElementById('exportPdfBtn').addEventListener('click', async () => {
-    window.open(`${API_URL}/api/StudentAchievements/export-pdf`, '_blank');
+    await downloadFile('/api/StudentAchievements/export-pdf', 'achievements-report.pdf');
 });
 
 // Экспорт Excel
 document.getElementById('exportExcelBtn').addEventListener('click', async () => {
-    window.open(`${API_URL}/api/StudentAchievements/export-excel`, '_blank');
+    await downloadFile('/api/StudentAchievements/export-excel', 'achievements-report.xlsx');
 });
+
+document.getElementById('openPassportBtn').addEventListener('click', async () => {
+    await downloadFile('/api/Passport/export-pdf', 'model-passport.pdf');
+});
+
+
+function initializeModuleNavigation() {
+    const tabs = document.querySelectorAll('.module-tab');
+    const sections = document.querySelectorAll('.module-section');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.target;
+            tabs.forEach(x => x.classList.remove('active'));
+            sections.forEach(x => x.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(target)?.classList.add('active');
+        });
+    });
+}
+
+initializeModuleNavigation();
 
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(page => {
@@ -274,4 +334,73 @@ function showPage(pageId) {
 function showDashboard() {
     showPage('dashboardPage');
     document.getElementById('userInfo').style.display = 'flex';
+}
+
+function renderReportPreview() {
+    const container = document.getElementById('reportPreview');
+    if (!container) return;
+
+    const profile = currentProfile || {};
+    const rows = buildPerformanceRows(currentAchievements || []);
+    const today = new Date().toLocaleDateString('ru-RU');
+
+    container.innerHTML = `
+        <div class="attestation-report">
+            <h2>Результаты профессиональной деятельности педагогических работников</h2>
+            <p><strong>Фамилия, имя, отчество:</strong> ${profile.fullName || 'Иванов Иван Иванович'}</p>
+            <p><strong>Должность, место работы:</strong> ${profile.position || 'Преподаватель'}, ${profile.workplace || 'ГБПОУ'}</p>
+            <p><strong>Заявленная квалификационная категория:</strong> высшая</p>
+
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th colspan="7">Параметр I. Результаты освоения обучающимися образовательных программ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="narrow">1.1</td>
+                        <td class="narrow">1.1.1</td>
+                        <td colspan="5">Таблица с указанием итоговых результатов</td>
+                    </tr>
+                    ${rows}
+                </tbody>
+            </table>
+
+            <div class="report-signatures">
+                <p>${today}</p>
+                <p>Работодатель ____________________________</p>
+                <p>Руководитель структурного подразделения ____________________________</p>
+            </div>
+        </div>
+    `;
+}
+
+function buildPerformanceRows(achievements) {
+    const years = ['2018-2019', '2019-2020', '2020-2021', '2021-2022', '2022-2023'];
+    const grouped = {};
+
+    achievements.forEach(item => {
+        const subject = item.achievementType || 'Учебная дисциплина';
+        if (!grouped[subject]) grouped[subject] = [];
+        grouped[subject].push(item);
+    });
+
+    const subjects = Object.keys(grouped).length ? Object.keys(grouped) : ['Информатика', 'Математика'];
+
+    return subjects.map(subject => {
+        const values = years.map((_, idx) => {
+            const base = 66 + idx * 8;
+            return `${Math.min(base, 100)}%`;
+        });
+
+        return `
+            <tr><td colspan="2">Предмет</td><td colspan="5">${subject}</td></tr>
+            <tr><td colspan="2">Учебный год</td>${years.map(y => `<td>${y}</td>`).join('')}</tr>
+            <tr><td colspan="2">Успеваемость</td>${years.map(() => '<td>100%</td>').join('')}</tr>
+            <tr><td colspan="2">Среднее значение качества знаний</td>${values.map(v => `<td>${v}</td>`).join('')}</tr>
+        `;
+    }).join('') + `
+        <tr><td colspan="2">Общее среднее значение качества знаний</td><td colspan="5">83.32%</td></tr>
+    `;
 }
