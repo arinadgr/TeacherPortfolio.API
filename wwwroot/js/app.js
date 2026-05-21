@@ -1,8 +1,15 @@
-const API_URL = 'https://localhost:7035';
+const API_URL = window.location.origin;
 let currentToken = null;
+let currentProfile = null;
+let currentAchievements = [];
+let currentPassport = null;
 
 // Проверка авторизации при загрузке
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.protocol === 'file:') {
+        alert('Откройте приложение через http://localhost:5266, а не напрямую из файла index.html');
+        return;
+    }
     const token = localStorage.getItem('token');
     if (token) {
         currentToken = token;
@@ -10,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadProfile();
         loadAchievements();
         loadDropdowns();
+        loadPassport();
     }
 });
 
@@ -45,6 +53,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             loadProfile();
             loadAchievements();
             loadDropdowns();
+        loadPassport();
+            renderReportPreview();
         } else {
             alert('Ошибка входа. Проверьте email и пароль.');
         }
@@ -102,9 +112,27 @@ async function loadProfile() {
                 <p><strong>Email:</strong> ${profile.email}</p>
             `;
             document.getElementById('userName').innerHTML = `👋 ${profile.fullName}`;
+            currentProfile = profile;
+            renderReportPreview();
         }
     } catch (error) {
         console.error('Ошибка загрузки профиля:', error);
+    }
+}
+
+
+async function loadPassport() {
+    try {
+        const response = await fetch(`${API_URL}/api/Passport`, {
+            headers: { 'Authorization': `Bearer ${currentToken}` }
+        });
+
+        if (response.ok) {
+            currentPassport = await response.json();
+            renderReportPreview();
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки паспорта:', error);
     }
 }
 
@@ -119,8 +147,11 @@ async function loadAchievements() {
             const achievements = await response.json();
             const container = document.getElementById('achievementsList');
             
+            currentAchievements = achievements;
+
             if (achievements.length === 0) {
                 container.innerHTML = '<p>Достижений пока нет</p>';
+                renderReportPreview();
                 return;
             }
 
@@ -136,6 +167,7 @@ async function loadAchievements() {
                     </div>
                 </div>
             `).join('');
+            renderReportPreview();
         }
     } catch (error) {
         console.error('Ошибка загрузки достижений:', error);
@@ -255,14 +287,61 @@ async function loadDropdowns() {
 }
 
 // Экспорт PDF
+async function downloadFile(endpoint, filename) {
+    try {
+        const response = await fetch(`${API_URL}${endpoint}`, {
+            headers: { 'Authorization': `Bearer ${currentToken}` }
+        });
+
+        if (!response.ok) {
+            alert('Не удалось скачать файл. Проверьте авторизацию.');
+            return;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        alert('Ошибка скачивания файла');
+    }
+}
+
 document.getElementById('exportPdfBtn').addEventListener('click', async () => {
-    window.open(`${API_URL}/api/StudentAchievements/export-pdf`, '_blank');
+    await downloadFile('/api/StudentAchievements/export-pdf', 'achievements-report.pdf');
 });
 
 // Экспорт Excel
 document.getElementById('exportExcelBtn').addEventListener('click', async () => {
-    window.open(`${API_URL}/api/StudentAchievements/export-excel`, '_blank');
+    await downloadFile('/api/StudentAchievements/export-excel', 'achievements-report.xlsx');
 });
+
+document.getElementById('openPassportBtn').addEventListener('click', async () => {
+    await downloadFile('/api/Passport/export-pdf', 'model-passport.pdf');
+});
+
+
+function initializeModuleNavigation() {
+    const tabs = document.querySelectorAll('.module-tab');
+    const sections = document.querySelectorAll('.module-section');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.target;
+            tabs.forEach(x => x.classList.remove('active'));
+            sections.forEach(x => x.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(target)?.classList.add('active');
+        });
+    });
+}
+
+initializeModuleNavigation();
 
 function showPage(pageId) {
     document.querySelectorAll('.page').forEach(page => {
@@ -275,3 +354,63 @@ function showDashboard() {
     showPage('dashboardPage');
     document.getElementById('userInfo').style.display = 'flex';
 }
+
+function renderReportPreview() {
+    const container = document.getElementById('reportPreview');
+    if (!container) return;
+
+    if (!currentPassport) {
+        container.innerHTML = '<p>Нет данных для модельного паспорта. Заполните модули и обновите страницу.</p>';
+        return;
+    }
+
+    const p = currentPassport;
+    const tInfo = p.teacherInfo || {};
+    const p1 = p.parameter1 || {};
+    const p2 = p.parameter2 || {};
+    const signDate = '22.05.2026';
+
+    container.innerHTML = `
+        <div class="attestation-report">
+            <h2>Результаты профессиональной деятельности педагогических работников</h2>
+            <p><strong>Фамилия, имя, отчество:</strong> ${tInfo.fullName || '—'}</p>
+            <p><strong>Должность, место работы:</strong> ${tInfo.position || 'Не указана'}, ${tInfo.workplace || 'Не указано'}</p>
+            <p><strong>Наличие квалификационной категории:</strong> ${tInfo.qualificationCategory || '—'}</p>
+            <p><strong>Заявленная квалификационная категория:</strong> ${p.totalScores?.recommendedCategory || 'Высшая квалификационная категория'}</p>
+
+            <h3>Параметр I. Результаты освоения обучающимися образовательных программ</h3>
+            ${buildAcademicPerformanceTable(p1.academicPerformances || [])}
+            ${buildGraduationTable(p1.graduationResults || [])}
+            ${buildStudentAchievementsTable(p1.studentAchievements || [])}
+
+            <h3>Параметр II. Личный вклад педагогического работника</h3>
+            ${buildMethodicalTable(p2.methodicalMaterials || [])}
+            ${buildElectronicTable(p2.electronicResources || [])}
+
+            <div class="report-signatures">
+                <p>${signDate}</p>
+                <p>Работодатель _________________ (Ф.И.О. работодателя)</p>
+                <p>Руководитель структурного подразделения _________________ (Ф.И.О. руководителя структурного подразделения)</p>
+                <p>подтверждают достоверность представленной информации</p>
+                <p>${tInfo.fullName || 'Иванов Иван'} (Ф.И.О. педагогического работника)</p>
+                <p>аттестуемого(ой) с целью установления ${p.totalScores?.recommendedCategory || 'Высшая квалификационная категория'} по должности «${tInfo.position || 'Не указана'}»</p>
+                <p>${signDate} (подпись руководителя структурного подразделения)</p>
+                <p>${signDate} (подпись работодателя)</p>
+            </div>
+        </div>
+    `;
+}
+
+function makeTable(title, headers, rows) {
+    return `
+      <h4>${title}</h4>
+      <table class="report-table">
+        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows.length ? rows.map(r => `<tr>${r.map(c => `<td>${c ?? '—'}</td>`).join('')}</tr>`).join('') : '<tr><td colspan="'+headers.length+'">Нет данных</td></tr>'}</tbody>
+      </table>`;
+}
+function buildAcademicPerformanceTable(items){return makeTable('1.1 Успеваемость и качество знаний',['Учебный год','Дисциплина','Группа','Качество %','Успеваемость %'],items.map(x=>[x.academicYear,x.discipline,x.groupName,x.qualityPercent,x.successPercent]));}
+function buildGraduationTable(items){return makeTable('1.2 Результаты ГИА',['Учебный год','Студент','Тема ВКР','Оценка'],items.map(x=>[x.academicYear,x.studentName,x.thesisTopic,x.grade]));}
+function buildStudentAchievementsTable(items){return makeTable('1.3 Достижения обучающихся',['Дата','Наименование мероприятия','Уровень','Обучающийся','Результат'],items.map(x=>[x.eventDate,x.eventName,x.level,x.studentName,x.result]));}
+function buildMethodicalTable(items){return makeTable('2.1 Программно-методические материалы',['Период','Вид материала','Наименование'],items.map(x=>[x.academicYear,x.materialType,x.topic]));}
+function buildElectronicTable(items){return makeTable('2.2 Электронные образовательные ресурсы',['Тема занятия','Наименование ЭОР','Форма взаимодействия'],items.map(x=>[x.topic,x.name,x.interactionForm]));}
