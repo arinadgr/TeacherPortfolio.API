@@ -1,164 +1,138 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Portfolio - Личный кабинет преподавателя</title>
+    <title>Электронное портфолио преподавателя ИРКПО</title>
+
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
-    <div class="container">
-        <!-- Шапка -->
-        <header class="header">
-            <h1>📚 Teacher Portfolio</h1>
-            <div class="user-info" id="userInfo" style="display: none;">
-                <span id="userName"></span>
-                <button id="logoutBtn" class="btn-logout">Выйти</button>
-            </div>
-        </header>
 
-        <!-- Страница входа -->
-        <div id="loginPage" class="page active">
-            <div class="card">
-                <h2>Вход в систему</h2>
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="loginEmail" required placeholder="ivanov@school.ru">
-                    </div>
-                    <div class="form-group">
-                        <label>Пароль</label>
-                        <input type="password" id="loginPassword" required placeholder="******">
-                    </div>
-                    <button type="submit" class="btn-primary">Войти</button>
-                </form>
-                <p class="register-link">
-                    Нет аккаунта? <a href="#" id="showRegister">Зарегистрироваться</a>
-                </p>
-            </div>
+    <!-- AUTH -->
+
+    <div id="authPage" class="auth-page">
+
+        <div class="auth-card">
+
+            <h1>Портфолио преподавателя ИРКПО</h1>
+
+            <input id="email" type="email" placeholder="Email">
+
+            <input id="password" type="password" placeholder="Пароль">
+
+            <button onclick="login()">Войти</button>
+
+            <button onclick="register()">Регистрация</button>
+
         </div>
 
-        <!-- Страница регистрации -->
-        <div id="registerPage" class="page">
-            <div class="card">
-                <h2>Регистрация</h2>
-                <form id="registerForm">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="regEmail" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Пароль</label>
-                        <input type="password" id="regPassword" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Роль</label>
-                        <select id="regRole">
-                            <option value="Teacher">Преподаватель</option>
-                            <option value="Admin">Администратор</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="btn-primary">Зарегистрироваться</button>
-                </form>
-                <p class="register-link">
-                    Уже есть аккаунт? <a href="#" id="showLogin">Войти</a>
-                </p>
+    </div>
+
+    <!-- MAIN -->
+
+    <div id="mainLayout" class="layout hidden">
+
+        <aside class="sidebar">
+
+            <h2>Портфолио</h2>
+
+            <button onclick="loadDashboard()">
+                Личный кабинет
+            </button>
+
+            <button onclick="loadPassport()">
+                Модельный паспорт
+            </button>
+
+            <hr>
+
+            <button onclick="loadModule('academic')">
+                1.1.1 Успеваемость
+            </button>
+
+            <button onclick="loadModule('graduation')">
+                1.2.2 ГИА
+            </button>
+
+            <button onclick="loadModule('achievements')">
+                1.3.1 Конкурсы студентов
+            </button>
+
+            <button onclick="loadModule('projects')">
+                1.3.2 Проектная деятельность
+            </button>
+
+            <button onclick="loadModule('methodical')">
+                2.1.1 Методические материалы
+            </button>
+
+            <button onclick="loadModule('eor')">
+                2.1.3 ЭОР
+            </button>
+
+            <button onclick="loadModule('experience')">
+                2.3.1 Методические мероприятия
+            </button>
+
+            <button onclick="loadModule('contests')">
+                2.4.1 Конкурсы профмастерства
+            </button>
+
+            <button onclick="loadModule('expert')">
+                2.5.1 Работа в жюри
+            </button>
+
+            <button onclick="loadModule('technologies')">
+                2.6.1 Педагогические технологии
+            </button>
+
+            <hr>
+
+            <button onclick="logout()">
+                Выход
+            </button>
+
+        </aside>
+
+        <main class="content">
+
+            <div id="content"></div>
+
+        </main>
+
+    </div>
+
+    <!-- MODAL -->
+
+    <div class="modal hidden" id="modal">
+
+        <div class="modal-content">
+
+            <h2 id="modalTitle"></h2>
+
+            <div id="modalFields"></div>
+
+            <div class="modal-buttons">
+
+                <button onclick="saveItem()">
+                    Сохранить
+                </button>
+
+                <button onclick="closeModal()">
+                    Закрыть
+                </button>
+
             </div>
+
         </div>
 
-        <!-- Личный кабинет -->
-        <div id="dashboardPage" class="page">
-            <div class="dashboard-header">
-                <h2>Личный кабинет преподавателя</h2>
-                <div class="export-buttons">
-                    <button id="openPassportBtn" class="btn-export">👁️ Модельный паспорт</button>
-                    <button id="exportPdfBtn" class="btn-export">📄 Экспорт PDF</button>
-                    <button id="exportExcelBtn" class="btn-export">📊 Экспорт Excel</button>
-                </div>
-            </div>
-
-            <div class="module-nav">
-                <button class="module-tab active" data-target="homeSection">Главная</button>
-                <button class="module-tab" data-target="achievementsSection">Достижения студентов</button>
-                <button class="module-tab" data-target="modulesSection">Остальные модули</button>
-            </div>
-
-            <section id="homeSection" class="module-section active">
-                <div class="card profile-card">
-                    <h3>👤 Общие данные преподавателя</h3>
-                    <div id="profileInfo"></div>
-                </div>
-
-                <div class="card report-card">
-                    <h3>🧾 Предпросмотр модельного паспорта</h3>
-                    <div id="reportPreview" class="report-preview"></div>
-                </div>
-            </section>
-
-            <section id="achievementsSection" class="module-section">
-                <div class="card">
-                    <h3>➕ Добавить достижение</h3>
-                    <form id="achievementForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Студент *</label>
-                                <input type="text" id="studentName" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Мероприятие *</label>
-                                <input type="text" id="achievementType" required>
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Дата *</label>
-                                <input type="date" id="eventDate" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Организатор</label>
-                                <input type="text" id="eventOrganizer">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Группа</label>
-                                <input type="text" id="groupName">
-                            </div>
-                            <div class="form-group">
-                                <label>Результат</label>
-                                <input type="text" id="resultDescription">
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Уровень *</label>
-                                <select id="levelId"></select>
-                            </div>
-                            <div class="form-group">
-                                <label>Учебный год *</label>
-                                <select id="academicyearId"></select>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn-primary">Сохранить</button>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <h3>🏆 Достижения студентов (CRUD)</h3>
-                    <div id="achievementsList" class="achievements-list"></div>
-                </div>
-            </section>
-
-            <section id="modulesSection" class="module-section">
-                <div class="card">
-                    <h3>📚 Модули портфолио</h3>
-                    <div id="modulesCrudHost"></div>
-                </div>
-            </section>
-        </div>
     </div>
 
     <script src="js/app.js"></script>
+
 </body>
+
 </html>

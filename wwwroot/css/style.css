@@ -1,358 +1,181 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
-body {
-    font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+body{
+    font-family:Segoe UI;
+    background:#f4f6f9;
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+.hidden{
+    display:none !important;
 }
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 0;
-    color: white;
+/* AUTH */
+
+.auth-page{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
 }
 
-.header h1 {
-    font-size: 28px;
+.auth-card{
+    width:400px;
+    background:white;
+    padding:30px;
+    border-radius:14px;
+    box-shadow:0 0 15px rgba(0,0,0,.1);
 }
 
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+.auth-card h1{
+    margin-bottom:20px;
+    font-size:24px;
 }
 
-.btn-logout {
-    background: rgba(255,255,255,0.2);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s;
+.auth-card input{
+    width:100%;
+    padding:12px;
+    margin-bottom:15px;
 }
 
-.btn-logout:hover {
-    background: rgba(255,255,255,0.3);
+.auth-card button{
+    width:100%;
+    padding:12px;
+    margin-bottom:10px;
+    border:none;
+    background:#1f4c7c;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
 }
 
-.page {
-    display: none;
-    animation: fadeIn 0.3s ease;
+/* LAYOUT */
+
+.layout{
+    display:flex;
+    min-height:100vh;
 }
 
-.page.active {
-    display: block;
+.sidebar{
+    width:320px;
+    background:#1f3b5b;
+    color:white;
+    padding:20px;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+.sidebar h2{
+    margin-bottom:20px;
 }
 
-.card {
-    background: white;
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+.sidebar button{
+    width:100%;
+    padding:12px;
+    margin-bottom:10px;
+    border:none;
+    background:#2d527d;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+    text-align:left;
 }
 
-.card h2, .card h3 {
-    margin-bottom: 20px;
-    color: #333;
+.sidebar button:hover{
+    background:#416b9c;
 }
 
-.form-group {
-    margin-bottom: 16px;
+.content{
+    flex:1;
+    padding:30px;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 500;
-    color: #555;
+/* CARD */
+
+.card{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:20px;
 }
 
-.form-group input,
-.form-group select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    transition: border-color 0.3s;
+.card-header{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:20px;
 }
 
-.form-group input:focus,
-.form-group select:focus {
-    outline: none;
-    border-color: #667eea;
+/* TABLE */
+
+table{
+    width:100%;
+    border-collapse:collapse;
 }
 
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+th,td{
+    border:1px solid #ddd;
+    padding:10px;
 }
 
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s;
-    width: 100%;
+th{
+    background:#eef2f7;
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
+/* BUTTONS */
+
+.btn-primary{
+    background:#1f5da8;
+    color:white;
+    border:none;
+    padding:10px 16px;
+    border-radius:8px;
+    cursor:pointer;
 }
 
-.btn-export {
-    background: #28a745;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-left: 10px;
+.btn-danger{
+    background:#d53d3d;
+    color:white;
+    border:none;
+    padding:8px 12px;
+    border-radius:8px;
+    cursor:pointer;
 }
 
-.btn-export:hover {
-    background: #218838;
+.btn-warning{
+    background:#f0ad4e;
+    color:white;
+    border:none;
+    padding:8px 12px;
+    border-radius:8px;
+    cursor:pointer;
 }
 
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
+/* MODAL */
+
+.modal{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    display:flex;
+    justify-content:center;
+    align-items:center;
 }
 
-.profile-card p {
-    margin: 8px 0;
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
+.modal-content{
+    width:700px;
+    background:white;
+    border-radius:12px;
+    padding:20px;
 }
 
-.achievements-list {
-    display: grid;
-    gap: 12px;
+.modal-content input{
+    width:100%;
+    padding:12px;
+    margin-bottom:12px;
 }
 
-.achievement-item {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.3s;
-}
-
-.achievement-item:hover {
-    background: #e9ecef;
-}
-
-.achievement-info {
-    flex: 1;
-}
-
-.achievement-info strong {
-    font-size: 16px;
-    color: #333;
-}
-
-.achievement-info p {
-    margin-top: 4px;
-    font-size: 14px;
-    color: #666;
-}
-
-.achievement-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.btn-edit, .btn-delete {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.btn-edit {
-    background: #ffc107;
-    color: #333;
-}
-
-.btn-delete {
-    background: #dc3545;
-    color: white;
-}
-
-.register-link {
-    text-align: center;
-    margin-top: 16px;
-}
-
-.register-link a {
-    color: #667eea;
-    text-decoration: none;
-}
-
-.error-message {
-    background: #f8d7da;
-    color: #721c24;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-}
-
-.success-message {
-    background: #d4edda;
-    color: #155724;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-}
-.report-card {
-    overflow-x: auto;
-}
-
-.report-preview {
-    background: #f6f6f6;
-    border: 1px solid #cfcfcf;
-    padding: 20px;
-}
-
-.attestation-report {
-    font-family: 'Times New Roman', serif;
-    color: #000;
-    line-height: 1.2;
-}
-
-.attestation-report h2 {
-    text-align: center;
-    font-size: 34px;
-    margin-bottom: 20px;
-}
-
-.attestation-report p {
-    font-size: 25px;
-    margin-bottom: 8px;
-}
-
-.report-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    margin-bottom: 30px;
-}
-
-.report-table th,
-.report-table td {
-    border: 1px solid #000;
-    padding: 8px 10px;
-    vertical-align: top;
-    font-size: 23px;
-}
-
-.report-table .narrow {
-    width: 90px;
-}
-
-.report-signatures {
-    border-top: 1px solid #000;
-    padding-top: 16px;
-}
-
-.report-signatures p {
-    margin-top: 16px;
-}
-
-.module-nav {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-}
-
-.module-tab {
-    border: 1px solid #d0d7e2;
-    background: #fff;
-    border-radius: 8px;
-    padding: 8px 14px;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.module-tab.active {
-    background: #667eea;
-    color: #fff;
-    border-color: #667eea;
-}
-
-.module-section {
-    display: none;
-}
-
-.module-section.active {
-    display: block;
-}
-
-.module-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 12px;
-}
-
-.module-item {
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 12px;
-    display: grid;
-    gap: 6px;
-    background: #f8fafc;
-}
-
-.module-item span {
-    color: #475569;
-    font-size: 13px;
-}
-
-.passport-print {
-    width: 794px;
-    margin: 0 auto;
-    font-family: 'Times New Roman', serif;
-    color: #000;
-    background: #fff;
-    padding: 24px;
-}
-.passport-print h1, .passport-print h2 { font-weight: 700; margin: 12px 0; }
-.report-table.fixed { table-layout: fixed; width: 100%; }
-.report-table.fixed th, .report-table.fixed td { word-break: break-word; }
-.page-break { page-break-before: always; margin-top: 24px; }
-@media print {
-  body, .container, .card, .report-preview { background:#fff !important; box-shadow:none !important; }
-  .header, .module-nav, .dashboard-header, #achievementForm, .achievements-list, #modulesCrudHost { display:none !important; }
-  .passport-print { width: 210mm; min-height: 297mm; padding: 10mm; }
+.modal-buttons{
+    display:flex;
+    gap:10px;
 }
