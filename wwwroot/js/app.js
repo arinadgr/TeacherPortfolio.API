@@ -1,10 +1,14 @@
-const API_URL = 'https://localhost:7035';
+const API_URL = window.location.origin;
 let currentToken = null;
 let currentProfile = null;
 let currentAchievements = [];
 
 // Проверка авторизации при загрузке
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.protocol === 'file:') {
+        alert('Откройте приложение через http://localhost:5266, а не напрямую из файла index.html');
+        return;
+    }
     const token = localStorage.getItem('token');
     if (token) {
         currentToken = token;
