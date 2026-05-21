@@ -70,72 +70,92 @@
         <!-- Личный кабинет -->
         <div id="dashboardPage" class="page">
             <div class="dashboard-header">
-                <h2>Личный кабинет</h2>
+                <h2>Личный кабинет преподавателя</h2>
                 <div class="export-buttons">
+                    <button id="openPassportBtn" class="btn-export">👁️ Модельный паспорт</button>
                     <button id="exportPdfBtn" class="btn-export">📄 Экспорт PDF</button>
                     <button id="exportExcelBtn" class="btn-export">📊 Экспорт Excel</button>
                 </div>
             </div>
 
-            <!-- Профиль -->
-            <div class="card profile-card">
-                <h3>👤 Профиль преподавателя</h3>
-                <div id="profileInfo"></div>
+            <div class="module-nav">
+                <button class="module-tab active" data-target="homeSection">Главная</button>
+                <button class="module-tab" data-target="achievementsSection">Достижения студентов</button>
+                <button class="module-tab" data-target="modulesSection">Остальные модули</button>
             </div>
 
-            <!-- Форма добавления достижения -->
-            <div class="card">
-                <h3>➕ Добавить достижение</h3>
-                <form id="achievementForm">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Студент *</label>
-                            <input type="text" id="studentName" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Мероприятие *</label>
-                            <input type="text" id="achievementType" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Дата *</label>
-                            <input type="date" id="eventDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Организатор</label>
-                            <input type="text" id="eventOrganizer">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Группа</label>
-                            <input type="text" id="groupName">
-                        </div>
-                        <div class="form-group">
-                            <label>Результат</label>
-                            <input type="text" id="resultDescription">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Уровень *</label>
-                            <select id="levelId"></select>
-                        </div>
-                        <div class="form-group">
-                            <label>Учебный год *</label>
-                            <select id="academicyearId"></select>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-primary">Сохранить</button>
-                </form>
-            </div>
+            <section id="homeSection" class="module-section active">
+                <div class="card profile-card">
+                    <h3>👤 Общие данные преподавателя</h3>
+                    <div id="profileInfo"></div>
+                </div>
 
-            <!-- Список достижений -->
-            <div class="card">
-                <h3>🏆 Мои достижения</h3>
-                <div id="achievementsList" class="achievements-list"></div>
-            </div>
+                <div class="card report-card">
+                    <h3>🧾 Предпросмотр модельного паспорта</h3>
+                    <div id="reportPreview" class="report-preview"></div>
+                </div>
+            </section>
+
+            <section id="achievementsSection" class="module-section">
+                <div class="card">
+                    <h3>➕ Добавить достижение</h3>
+                    <form id="achievementForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Студент *</label>
+                                <input type="text" id="studentName" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Мероприятие *</label>
+                                <input type="text" id="achievementType" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Дата *</label>
+                                <input type="date" id="eventDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Организатор</label>
+                                <input type="text" id="eventOrganizer">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Группа</label>
+                                <input type="text" id="groupName">
+                            </div>
+                            <div class="form-group">
+                                <label>Результат</label>
+                                <input type="text" id="resultDescription">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Уровень *</label>
+                                <select id="levelId"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Учебный год *</label>
+                                <select id="academicyearId"></select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">Сохранить</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>🏆 Достижения студентов (CRUD)</h3>
+                    <div id="achievementsList" class="achievements-list"></div>
+                </div>
+            </section>
+
+            <section id="modulesSection" class="module-section">
+                <div class="card">
+                    <h3>📚 Модули портфолио</h3>
+                    <div id="modulesCrudHost"></div>
+                </div>
+            </section>
         </div>
     </div>
 
