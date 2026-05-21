@@ -264,13 +264,38 @@ async function loadDropdowns() {
 }
 
 // Экспорт PDF
+async function downloadFile(endpoint, filename) {
+    try {
+        const response = await fetch(`${API_URL}${endpoint}`, {
+            headers: { 'Authorization': `Bearer ${currentToken}` }
+        });
+
+        if (!response.ok) {
+            alert('Не удалось скачать файл. Проверьте авторизацию.');
+            return;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        alert('Ошибка скачивания файла');
+    }
+}
+
 document.getElementById('exportPdfBtn').addEventListener('click', async () => {
-    window.open(`${API_URL}/api/StudentAchievements/export-pdf`, '_blank');
+    await downloadFile('/api/StudentAchievements/export-pdf', 'achievements-report.pdf');
 });
 
 // Экспорт Excel
 document.getElementById('exportExcelBtn').addEventListener('click', async () => {
-    window.open(`${API_URL}/api/StudentAchievements/export-excel`, '_blank');
+    await downloadFile('/api/StudentAchievements/export-excel', 'achievements-report.xlsx');
 });
 
 function showPage(pageId) {
