@@ -1,277 +1,139 @@
-const API_URL = 'https://localhost:7035';
-let currentToken = null;
+const state = {
+  profile: null,
+  passport: null,
+  modules: {}
+};
 
-// Проверка авторизации при загрузке
+const modules = [
+  { key:'academic', title:'1.1.1 Результаты промежуточной аттестации', endpoint:'/api/AcademicPerformance', columns:['academicYearName','discipline','groupName','qualityPercent','successPercent'], fields:[['academicYearId','Учебный год ID','number'],['discipline','Дисциплина','text'],['groupName','Группа','text'],['qualityPercent','Качество %','number'],['successPercent','Успеваемость %','number']] },
+  { key:'gia', title:'1.2.2 Результаты ГИА', endpoint:'/api/GraduationResult', columns:['academicYearName','studentName','groupName','thesisTopic','grade'], fields:[['academicYearId','Учебный год ID','number'],['studentName','Студент','text'],['groupName','Группа','text'],['specialty','Специальность','text'],['thesisTopic','Тема ВКР','text'],['grade','Оценка','text']] },
+  { key:'achievements', title:'1.3.1 Участие обучающихся в конкурсах', endpoint:'/api/StudentAchievements/achievements', listEndpoint:'/api/StudentAchievements/my-achievements', columns:['studentName','achievementType','level','eventDate','result'], fields:[['studentName','Студент','text'],['achievementType','Мероприятие','text'],['eventDate','Дата','date'],['eventOrganizer','Организатор','text'],['groupName','Группа','text'],['resultDescription','Результат','text'],['academicyearId','Учебный год ID','number'],['levelId','Уровень ID','number']] },
+  { key:'project', title:'1.3.2 Проектная и социально-значимая деятельность', endpoint:'/api/StudentAchievements/achievements', listEndpoint:'/api/StudentAchievements/my-achievements', columns:['studentName','achievementType','eventDate','resultDescription'], fields:[['studentName','Участник','text'],['achievementType','Название проекта','text'],['eventDate','Дата','date'],['eventOrganizer','Организатор','text'],['groupName','Группа','text'],['resultDescription','Описание','text'],['academicyearId','Учебный год ID','number'],['levelId','Уровень ID','number']] },
+  { key:'method', title:'2.1.1 Программно-методические материалы', endpoint:'/api/MethodicalMaterial', columns:['academicYearName','materialTypeName','topic','specialty'], fields:[['academicYearId','Учебный год ID','number'],['materialTypeId','Тип материала ID','number'],['specialty','Специальность','text'],['topic','Тема','text'],['internetLink','Ссылка','text'],['approvalDetails','Реквизиты','text'],['reviewingOrganization','Рецензент','text']] },
+  { key:'er', title:'2.1.3 Электронные образовательные ресурсы', endpoint:'/api/ElectronicResource', columns:['academicYearName','name','topic','interactionForm'], fields:[['academicYearId','Учебный год ID','number'],['name','Название','text'],['topic','Тема','text'],['interactionForm','Форма взаимодействия','text'],['link','Ссылка','text']] },
+  { key:'exp', title:'2.3.1 Методические мероприятия / трансляция опыта', endpoint:'/api/ExperienceSharing', columns:['eventDate','eventName','topic','levelName'], fields:[['levelId','Уровень ID','number'],['formatId','Формат ID','number'],['sharingFormId','Форма трансляции ID','number'],['eventName','Мероприятие','text'],['topic','Тема','text'],['eventDate','Дата','date'],['organizer','Организатор','text']] },
+  { key:'contest', title:'2.4.1 Конкурсы профмастерства', endpoint:'/api/TeacherContest', columns:['academicYearName','contestName','level','result'], fields:[['academicYearId','Учебный год ID','number'],['contestName','Конкурс','text'],['organizer','Организатор','text'],['level','Уровень','text'],['result','Результат','text'],['orderDetails','Реквизиты','text'],['link','Ссылка','text']] },
+  { key:'expert', title:'2.5.1 Экспертная деятельность', endpoint:'/api/ExpertActivity', columns:['eventDate','eventName','levelName','activityType'], fields:[['eventDate','Дата','date'],['academicYearId','Учебный год ID','number'],['eventName','Мероприятие','text'],['levelId','Уровень ID','number'],['activityType','Тип активности','text'],['documentDetails','Документ','text']] },
+  { key:'tech', title:'2.6.1 Публичное представление пед. опыта', endpoint:'/api/EducationalTechnology', columns:['technologyName','purpose','result','resourceLink'], fields:[['technologyName','Технология','text'],['purpose','Цель','text'],['result','Результат','text'],['resourceLink','Ссылка','text']] }
+];
+
 document.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        currentToken = token;
-        showDashboard();
-        loadProfile();
-        loadAchievements();
-        loadDropdowns();
-    }
+  if (window.location.protocol === 'file:') return alert('Откройте через http://localhost:5266');
+  bindAuth();
+  bindTabs();
+  renderModuleSections();
+  if (apiClient.getToken()) showDashboardAndLoad();
 });
 
-// Переключение страниц
-document.getElementById('showRegister').addEventListener('click', (e) => {
-    e.preventDefault();
-    showPage('registerPage');
-});
+function bindAuth() {
+  document.getElementById('showRegister').onclick = e => { e.preventDefault(); togglePage('registerPage'); };
+  document.getElementById('showLogin').onclick = e => { e.preventDefault(); togglePage('loginPage'); };
+  document.getElementById('logoutBtn').onclick = () => { apiClient.clearToken(); togglePage('loginPage'); };
 
-document.getElementById('showLogin').addEventListener('click', (e) => {
+  document.getElementById('loginForm').onsubmit = async e => {
     e.preventDefault();
-    showPage('loginPage');
-});
-
-// Вход
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-
     try {
-        const response = await fetch(`${API_URL}/api/Auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
+      const data = await apiClient.post('/api/Auth/login', { email: loginEmail.value, password: loginPassword.value });
+      apiClient.setToken(data.token); showDashboardAndLoad();
+    } catch { alert('Ошибка входа'); }
+  };
 
-        if (response.ok) {
-            const data = await response.json();
-            currentToken = data.token;
-            localStorage.setItem('token', currentToken);
-            showDashboard();
-            loadProfile();
-            loadAchievements();
-            loadDropdowns();
-        } else {
-            alert('Ошибка входа. Проверьте email и пароль.');
-        }
-    } catch (error) {
-        alert('Ошибка соединения с сервером');
-    }
-});
-
-// Регистрация
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  document.getElementById('registerForm').onsubmit = async e => {
     e.preventDefault();
-    const email = document.getElementById('regEmail').value;
-    const password = document.getElementById('regPassword').value;
-    const role = document.getElementById('regRole').value;
-
     try {
-        const response = await fetch(`${API_URL}/api/Auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password, role })
-        });
+      await apiClient.post('/api/Auth/register', { email: regEmail.value, password: regPassword.value, role: regRole.value });
+      alert('Регистрация успешна'); togglePage('loginPage');
+    } catch (err) { alert(err.message); }
+  };
+}
 
-        if (response.ok) {
-            alert('Регистрация успешна! Теперь войдите.');
-            showPage('loginPage');
-        } else {
-            const error = await response.text();
-            alert(error);
-        }
-    } catch (error) {
-        alert('Ошибка соединения с сервером');
-    }
-});
+function bindTabs() {
+  document.querySelectorAll('.module-tab').forEach(t => t.onclick = () => {
+    document.querySelectorAll('.module-tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.module-section').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.target).classList.add('active');
+  });
+  document.getElementById('openPassportBtn').onclick = () => apiClient.download('/api/Passport/export-pdf', 'model-passport.pdf');
+}
 
-// Выход
-document.getElementById('logoutBtn').addEventListener('click', () => {
-    localStorage.removeItem('token');
-    currentToken = null;
-    showPage('loginPage');
-});
+async function showDashboardAndLoad() {
+  togglePage('dashboardPage');
+  document.getElementById('userInfo').style.display = 'flex';
+  await Promise.all([loadProfile(), loadPassport(), ...modules.map(loadModule)]);
+}
 
-// Загрузка профиля
 async function loadProfile() {
-    try {
-        const response = await fetch(`${API_URL}/api/StudentAchievements/profile`, {
-            headers: { 'Authorization': `Bearer ${currentToken}` }
-        });
-
-        if (response.ok) {
-            const profile = await response.json();
-            document.getElementById('profileInfo').innerHTML = `
-                <p><strong>ФИО:</strong> ${profile.fullName}</p>
-                <p><strong>Должность:</strong> ${profile.position}</p>
-                <p><strong>Место работы:</strong> ${profile.workplace}</p>
-                <p><strong>Email:</strong> ${profile.email}</p>
-            `;
-            document.getElementById('userName').innerHTML = `👋 ${profile.fullName}`;
-        }
-    } catch (error) {
-        console.error('Ошибка загрузки профиля:', error);
-    }
+  state.profile = await apiClient.get('/api/StudentAchievements/profile');
+  const p = state.profile;
+  profileInfo.innerHTML = `<p><strong>ФИО:</strong> ${p.fullName}</p><p><strong>Должность:</strong> ${p.position}</p><p><strong>Место работы:</strong> ${p.workplace}</p><p><strong>Email:</strong> ${p.email}</p>`;
+  userName.textContent = `👋 ${p.fullName}`;
 }
 
-// Загрузка достижений
-async function loadAchievements() {
-    try {
-        const response = await fetch(`${API_URL}/api/StudentAchievements/my-achievements`, {
-            headers: { 'Authorization': `Bearer ${currentToken}` }
-        });
+async function loadPassport() { state.passport = await apiClient.get('/api/Passport'); renderPassport(); }
+async function loadModule(cfg) { const ep = cfg.listEndpoint || cfg.endpoint; state.modules[cfg.key] = await apiClient.get(ep); renderModuleTable(cfg); }
 
-        if (response.ok) {
-            const achievements = await response.json();
-            const container = document.getElementById('achievementsList');
-            
-            if (achievements.length === 0) {
-                container.innerHTML = '<p>Достижений пока нет</p>';
-                return;
-            }
+function renderModuleSections() {
+  modulesCrudHost.innerHTML = modules.map(cfg => `
+    <div class="card">
+      <h3>${cfg.title}</h3>
+      <form id="form-${cfg.key}" class="module-form">${cfg.fields.map(f => `<div class="form-group"><label>${f[1]}</label><input id="${cfg.key}-${f[0]}" type="${f[2]}" ${f[2]==='number'?'step="any"':''}></div>`).join('')}<button class="btn-primary">Добавить</button></form>
+      <div id="table-${cfg.key}"></div>
+    </div>`).join('');
 
-            container.innerHTML = achievements.map(a => `
-                <div class="achievement-item" data-id="${a.id}">
-                    <div class="achievement-info">
-                        <strong>${a.studentName}</strong> — ${a.achievementType}
-                        <p>${a.level} | ${a.eventDate} | Результат: ${a.result || '—'}</p>
-                    </div>
-                    <div class="achievement-actions">
-                        <button class="btn-edit" onclick="editAchievement(${a.id})">✏️</button>
-                        <button class="btn-delete" onclick="deleteAchievement(${a.id})">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-    } catch (error) {
-        console.error('Ошибка загрузки достижений:', error);
-    }
+  modules.forEach(cfg => document.getElementById(`form-${cfg.key}`).onsubmit = e => createRecord(e, cfg));
 }
 
-// Добавление достижения
-document.getElementById('achievementForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const achievement = {
-        studentName: document.getElementById('studentName').value,
-        achievementType: document.getElementById('achievementType').value,
-        eventDate: document.getElementById('eventDate').value,
-        eventOrganizer: document.getElementById('eventOrganizer').value,
-        groupName: document.getElementById('groupName').value,
-        resultDescription: document.getElementById('resultDescription').value,
-        academicyearId: parseInt(document.getElementById('academicyearId').value),
-        levelId: parseInt(document.getElementById('levelId').value),
-        directionId: null,
-        resultId: null
-    };
+function renderModuleTable(cfg) {
+  const rows = state.modules[cfg.key] || [];
+  const head = cfg.columns.map(c => `<th>${c}</th>`).join('');
+  const body = rows.map(r => `<tr>${cfg.columns.map(c => `<td>${r[c] ?? '—'}</td>`).join('')}<td><button onclick="editRecord('${cfg.key}',${r.id})">✏️</button><button onclick="deleteRecord('${cfg.key}',${r.id})">🗑️</button></td></tr>`).join('');
+  document.getElementById(`table-${cfg.key}`).innerHTML = `<table class="report-table fixed"><thead><tr>${head}<th>Действия</th></tr></thead><tbody>${body || `<tr><td colspan="${cfg.columns.length+1}">Нет данных</td></tr>`}</tbody></table>`;
+}
 
-    try {
-        const response = await fetch(`${API_URL}/api/StudentAchievements/achievements`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentToken}`
-            },
-            body: JSON.stringify(achievement)
-        });
+async function createRecord(e, cfg) {
+  e.preventDefault();
+  const payload = {};
+  cfg.fields.forEach(([k,,type]) => { const val = document.getElementById(`${cfg.key}-${k}`).value; payload[k] = type === 'number' ? (val === '' ? null : Number(val)) : (val || null); });
+  if (cfg.key === 'achievements' || cfg.key === 'project') Object.assign(payload, { directionId: null, resultId: null });
+  await apiClient.post(cfg.endpoint, payload);
+  e.target.reset();
+  await Promise.all([loadModule(cfg), loadPassport()]);
+}
 
-        if (response.ok) {
-            alert('Достижение добавлено!');
-            document.getElementById('achievementForm').reset();
-            loadAchievements();
-        } else {
-            alert('Ошибка при добавлении');
-        }
-    } catch (error) {
-        alert('Ошибка соединения');
-    }
-});
-
-// Удаление достижения
-window.deleteAchievement = async (id) => {
-    if (confirm('Удалить это достижение?')) {
-        try {
-            const response = await fetch(`${API_URL}/api/StudentAchievements/achievements/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${currentToken}` }
-            });
-
-            if (response.ok) {
-                loadAchievements();
-            } else {
-                alert('Ошибка при удалении');
-            }
-        } catch (error) {
-            alert('Ошибка соединения');
-        }
-    }
+window.editRecord = async (key, id) => {
+  const cfg = modules.find(x => x.key === key);
+  const current = (state.modules[key] || []).find(x => x.id === id);
+  if (!current) return;
+  const payload = {};
+  for (const [k,label,type] of cfg.fields) {
+    const v = prompt(label, current[k] ?? ''); if (v === null) return;
+    payload[k] = type === 'number' ? (v === '' ? null : Number(v)) : v;
+  }
+  if (key === 'achievements' || key === 'project') Object.assign(payload, { directionId: null, resultId: null });
+  await apiClient.put(`${cfg.endpoint}/${id}`, payload);
+  await Promise.all([loadModule(cfg), loadPassport()]);
 };
 
-// Редактирование
-window.editAchievement = async (id) => {
-    // Получаем текущее достижение
-    const response = await fetch(`${API_URL}/api/StudentAchievements/my-achievements`, {
-        headers: { 'Authorization': `Bearer ${currentToken}` }
-    });
-    const achievements = await response.json();
-    const achievement = achievements.find(a => a.id === id);
-    
-    if (achievement) {
-        const newStudentName = prompt('Введите имя студента:', achievement.studentName);
-        if (newStudentName) {
-            const updated = {
-                ...achievement,
-                studentName: newStudentName,
-                achievementType: achievement.achievementType,
-                eventDate: achievement.eventDate,
-                eventOrganizer: achievement.eventOrganizer,
-                groupName: achievement.groupName,
-                resultDescription: achievement.resultDescription,
-                academicyearId: 1,
-                levelId: 1,
-                directionId: null,
-                resultId: null
-            };
-            
-            const putResponse = await fetch(`${API_URL}/api/StudentAchievements/achievements/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentToken}`
-                },
-                body: JSON.stringify(updated)
-            });
-            
-            if (putResponse.ok) {
-                loadAchievements();
-            }
-        }
-    }
+window.deleteRecord = async (key, id) => {
+  if (!confirm('Удалить запись?')) return;
+  const cfg = modules.find(x => x.key === key);
+  await apiClient.delete(`${cfg.endpoint}/${id}`);
+  await Promise.all([loadModule(cfg), loadPassport()]);
 };
 
-// Загрузка справочников
-async function loadDropdowns() {
-    // Здесь можно загрузить уровни и учебные годы из API
-    // Пока добавим примерные данные
-    const levelSelect = document.getElementById('levelId');
-    const yearSelect = document.getElementById('academicyearId');
-    
-    levelSelect.innerHTML = '<option value="1">Школьный</option><option value="2">Городской</option><option value="3">Региональный</option>';
-    yearSelect.innerHTML = '<option value="1">2024-2025</option><option value="2">2025-2026</option>';
+function renderPassport() {
+  const p = state.passport;
+  if (!p) return reportPreview.innerHTML = '<p>Нет данных</p>';
+  const t = p.teacherInfo || {}; const p1 = p.parameter1 || {}; const p2 = p.parameter2 || {};
+  reportPreview.innerHTML = `<div class="passport-print"><h1>Результаты профессиональной деятельности педагогических работников</h1>
+  <p><b>Фамилия, имя, отчество:</b> ${t.fullName || ''}</p>
+  <p><b>Должность, место работы:</b> ${t.position || 'Не указана'}, ${t.workplace || 'Не указано'}</p>
+  ${passportTable(['Год','Дисциплина','Качество','Успеваемость'], (p1.academicPerformances||[]).map(x=>[x.academicYear,x.discipline,x.qualityPercent,x.successPercent]))}
+  ${passportTable(['Год','Студент','Тема ВКР','Оценка'], (p1.graduationResults||[]).map(x=>[x.academicYear,x.studentName,x.thesisTopic,x.grade]))}
+  <div class="page-break"></div>
+  ${passportTable(['Период','Тип','Тема'], (p2.methodicalMaterials||[]).map(x=>[x.academicYear,x.materialType,x.topic]))}
+  </div>`;
 }
-
-// Экспорт PDF
-document.getElementById('exportPdfBtn').addEventListener('click', async () => {
-    window.open(`${API_URL}/api/StudentAchievements/export-pdf`, '_blank');
-});
-
-// Экспорт Excel
-document.getElementById('exportExcelBtn').addEventListener('click', async () => {
-    window.open(`${API_URL}/api/StudentAchievements/export-excel`, '_blank');
-});
-
-function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-    document.getElementById(pageId).classList.add('active');
-}
-
-function showDashboard() {
-    showPage('dashboardPage');
-    document.getElementById('userInfo').style.display = 'flex';
-}
+function passportTable(headers, rows){ return `<table class="report-table fixed"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c ?? '—'}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${headers.length}">Нет данных</td></tr>`}</tbody></table>`; }
+function togglePage(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); }

@@ -593,9 +593,9 @@ namespace TeacherPortfolio.API.Services
                 {
                     container.Page(page =>
                     {
-                        page.Size(PageSizes.A4);
-                        page.Margin(2f, Unit.Centimetre);
-                        page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Times New Roman"));
+                        page.Size(PageSizes.A4.Landscape());
+                        page.Margin(1.2f, Unit.Centimetre);
+                        page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Times New Roman"));
 
                         page.Content().Column(col =>
                         {
