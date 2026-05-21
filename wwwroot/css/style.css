@@ -338,3 +338,21 @@ body {
     color: #475569;
     font-size: 13px;
 }
+
+.passport-print {
+    width: 794px;
+    margin: 0 auto;
+    font-family: 'Times New Roman', serif;
+    color: #000;
+    background: #fff;
+    padding: 24px;
+}
+.passport-print h1, .passport-print h2 { font-weight: 700; margin: 12px 0; }
+.report-table.fixed { table-layout: fixed; width: 100%; }
+.report-table.fixed th, .report-table.fixed td { word-break: break-word; }
+.page-break { page-break-before: always; margin-top: 24px; }
+@media print {
+  body, .container, .card, .report-preview { background:#fff !important; box-shadow:none !important; }
+  .header, .module-nav, .dashboard-header, #achievementForm, .achievements-list, #modulesCrudHost { display:none !important; }
+  .passport-print { width: 210mm; min-height: 297mm; padding: 10mm; }
+}
