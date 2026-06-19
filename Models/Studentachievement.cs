@@ -58,6 +58,10 @@ public partial class Studentachievement
     [StringLength(500)]
     public string? Documentlink { get; set; }
 
+    [Column("documentpath")]
+    [StringLength(500)]
+    public string? DocumentPath { get; set; }
+
     [Column("createdat", TypeName = "timestamp without time zone")]
     public DateTime Createdat { get; set; }
 

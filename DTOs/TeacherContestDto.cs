@@ -11,7 +11,9 @@ public class TeacherContestDto
     public string Result { get; set; } = string.Empty;
     public string? OrderDetails { get; set; }
     public string? Link { get; set; }
+    public string? DocumentPath { get; set; }
     public DateTime CreatedAt { get; set; }
+
 }
 
 public class CreateTeacherContestRequest
@@ -23,6 +25,7 @@ public class CreateTeacherContestRequest
     public string Result { get; set; } = string.Empty;
     public string? OrderDetails { get; set; }
     public string? Link { get; set; }
+    public string? DocumentPath { get; set; }
 }
 
 public class UpdateTeacherContestRequest
@@ -34,4 +37,5 @@ public class UpdateTeacherContestRequest
     public string Result { get; set; } = string.Empty;
     public string? OrderDetails { get; set; }
     public string? Link { get; set; }
+    public string? DocumentPath { get; set; }
 }

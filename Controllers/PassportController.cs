@@ -80,6 +80,22 @@ public class PassportController : ControllerBase
 
         return File(pdfBytes, "application/pdf", $"Модельный_паспорт_{GetFullName(teacher)}_{DateTime.Now:yyyyMMdd}.pdf");
     }
+    [HttpGet("export-word")]
+    public async Task<IActionResult> ExportToWord()
+    {
+        var user = GetCurrentUser();
+        if (user == null) return Unauthorized();
+
+        var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.Userid == user.Id);
+        if (teacher == null) return NotFound("Профиль не найден");
+
+        var passport = await BuildPassport(teacher, user);
+        var wordService = HttpContext.RequestServices.GetRequiredService<WordExportService>();
+        var wordBytes = wordService.GeneratePassportWord(passport);
+
+        return File(wordBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            $"Модельный_паспорт_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.docx");
+    }
 
     // ========== ВСПОМОГАТЕЛЬНЫЙ МЕТОД ДЛЯ ФОРМИРОВАНИЯ ПАСПОРТА ==========
     private async Task<ModelPassportDto> BuildPassport(Teacher teacher, User user)

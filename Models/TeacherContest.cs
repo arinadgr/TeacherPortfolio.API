@@ -48,4 +48,8 @@ public class TeacherContest
 
     [ForeignKey("AcademicYearId")]
     public virtual Academicyear AcademicYear { get; set; } = null!;
+
+    [Column("documentpath")]
+    [StringLength(500)]
+    public string? DocumentPath { get; set; }
 }

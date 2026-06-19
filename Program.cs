@@ -6,11 +6,9 @@ using Microsoft.OpenApi.Models;
 using TeacherPortfolio.API.Models;
 using TeacherPortfolio.API.Services;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -51,7 +49,7 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Регистрируем JwtService
+// Регистрируем сервисы
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<PdfService>();
 
@@ -74,6 +72,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+// НАСТРОЙКА CORS (разрешаем запросы с фронтенда)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -83,13 +92,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// ВАЖНО: порядок middleware имеет значение!
+app.UseCors("AllowAll");  // CORS должен быть ПЕРВЫМ после статических файлов
 
-app.UseAuthentication();
-app.UseAuthorization();
+// app.UseHttpsRedirection();  // Закомментируйте или удалите, так как у вас HTTP
 
-app.UseStaticFiles();
 app.UseDefaultFiles();
+app.UseStaticFiles();
+
+app.UseAuthentication();  // Сначала аутентификация
+app.UseAuthorization();   // Потом авторизация
 
 app.MapControllers();
 

@@ -66,8 +66,9 @@ public class TeacherContestController : ControllerBase
                 Organizer = x.Organizer,
                 Level = x.Level,
                 Result = x.Result,
-                OrderDetails = x.OrderDetails,
+                OrderDetails = x.OrderDetails,  
                 Link = x.Link,
+                DocumentPath = x.DocumentPath,
                 CreatedAt = x.CreatedAt
             })
             .ToListAsync();
@@ -98,6 +99,7 @@ public class TeacherContestController : ControllerBase
             Result = item.Result,
             OrderDetails = item.OrderDetails,
             Link = item.Link,
+            DocumentPath = item.DocumentPath,
             CreatedAt = item.CreatedAt
         });
     }
@@ -118,6 +120,7 @@ public class TeacherContestController : ControllerBase
             Result = request.Result,
             OrderDetails = request.OrderDetails,
             Link = request.Link,
+            DocumentPath = request.DocumentPath,
             CreatedAt = DateTime.Now
         };
 
@@ -145,6 +148,7 @@ public class TeacherContestController : ControllerBase
         item.Result = request.Result;
         item.OrderDetails = request.OrderDetails;
         item.Link = request.Link;
+        item.DocumentPath = request.DocumentPath;
 
         await _context.SaveChangesAsync();
 
@@ -191,6 +195,7 @@ public class TeacherContestController : ControllerBase
                 Result = x.Result,
                 OrderDetails = x.OrderDetails,
                 Link = x.Link,
+                DocumentPath = x.DocumentPath,
                 CreatedAt = x.CreatedAt
             })
             .ToListAsync();
@@ -222,6 +227,7 @@ public class TeacherContestController : ControllerBase
                 Result = x.Result,
                 OrderDetails = x.OrderDetails,
                 Link = x.Link,
+                DocumentPath = x.DocumentPath,
                 CreatedAt = x.CreatedAt
             })
             .ToListAsync();
@@ -236,6 +242,7 @@ public class TeacherContestController : ControllerBase
         worksheet.Cell(1, 5).Value = "Результат";
         worksheet.Cell(1, 6).Value = "Реквизиты приказа";
         worksheet.Cell(1, 7).Value = "Ссылка";
+        worksheet.Cell(1, 8).Value = "Подтверждающий документ";
 
         var headerRow = worksheet.Row(1);
         headerRow.Style.Font.Bold = true;
@@ -251,6 +258,7 @@ public class TeacherContestController : ControllerBase
             worksheet.Cell(row, 5).Value = item.Result;
             worksheet.Cell(row, 6).Value = item.OrderDetails;
             worksheet.Cell(row, 7).Value = item.Link;
+            worksheet.Cell(row, 8).Value = item.DocumentPath;
             row++;
         }
 

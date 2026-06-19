@@ -131,9 +131,6 @@ public class AcademicPerformanceController : ControllerBase
         var teacher = await GetCurrentTeacher();
         if (teacher == null) return NotFound("Профиль преподавателя не найден");
 
-        if (request.SuccessPercent != 100)
-            return BadRequest("Успеваемость должна быть 100%");
-
         var item = new AcademicPerformance
         {
             TeacherId = teacher.Id,
@@ -161,9 +158,6 @@ public class AcademicPerformanceController : ControllerBase
             .FirstOrDefaultAsync(x => x.Id == id && x.TeacherId == teacher.Id);
 
         if (item == null) return NotFound("Запись не найдена");
-
-        if (request.SuccessPercent != 100)
-            return BadRequest("Успеваемость должна быть 100%");
 
         item.AcademicYearId = request.AcademicYearId;
         item.Discipline = request.Discipline;

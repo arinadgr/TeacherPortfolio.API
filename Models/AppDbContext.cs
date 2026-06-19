@@ -52,6 +52,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Participationresult> Participationresults { get; set; }
 
     public virtual DbSet<Qualificationcategory> Qualificationcategories { get; set; }
+    public DbSet<Specialty> Specialties { get; set; }
 
     public virtual DbSet<Studentachievement> Studentachievements { get; set; }
 
