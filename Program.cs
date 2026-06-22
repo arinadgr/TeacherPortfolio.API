@@ -52,6 +52,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Регистрируем сервисы
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<PdfService>();
+builder.Services.AddScoped<WordExportService>();
 
 // Настройка JWT аутентификации
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

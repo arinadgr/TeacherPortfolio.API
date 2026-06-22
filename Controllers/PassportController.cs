@@ -84,17 +84,30 @@ public class PassportController : ControllerBase
     public async Task<IActionResult> ExportToWord()
     {
         var user = GetCurrentUser();
-        if (user == null) return Unauthorized();
 
-        var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.Userid == user.Id);
-        if (teacher == null) return NotFound("Профиль не найден");
+        if (user == null)
+            return Unauthorized();
+
+        var teacher = await _context.Teachers
+            .Include(t => t.Qualificationcategory)
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.Userid == user.Id);
+
+        if (teacher == null)
+            return NotFound("Профиль преподавателя не найден");
 
         var passport = await BuildPassport(teacher, user);
-        var wordService = HttpContext.RequestServices.GetRequiredService<WordExportService>();
-        var wordBytes = wordService.GeneratePassportWord(passport);
 
-        return File(wordBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            $"Модельный_паспорт_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.docx");
+        var wordService = HttpContext.RequestServices
+            .GetRequiredService<WordExportService>();
+
+        var bytes = wordService.GeneratePassportWord(passport);
+
+        return File(
+            bytes,
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            $"Модельный_паспорт_{GetFullName(teacher)}_{DateTime.Now:yyyyMMdd}.docx"
+        );
     }
 
     // ========== ВСПОМОГАТЕЛЬНЫЙ МЕТОД ДЛЯ ФОРМИРОВАНИЯ ПАСПОРТА ==========

@@ -122,6 +122,22 @@
             background: #e8f0fe;
             font-weight: 600;
         }
+
+        .support-block {
+    margin-top: 20px;
+    padding: 12px;
+    border-top: 1px solid rgba(255,255,255,.15);
+    font-size: 13px;
+    color: #d7e3f3;
+    line-height: 1.5;
+}
+
+.auth-support {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 13px;
+    color: #666;
+}
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 25px; border-radius: 12px; width: 500px; max-width: 90%; max-height: 80vh; overflow-y: auto; }
@@ -144,6 +160,12 @@
             <button type="submit">Войти</button>
         </form>
         <div class="auth-link"><a href="#" id="showRegisterLink">Нет аккаунта? Регистрация</a></div>
+        <div class="auth-support">
+    <p><b>Техническая поддержка</b></p>
+    <p>Дугарова Арина</p>
+    <p>+7 123 456 7890</p>
+    <p>support@mail.ru</p>
+</div>
     </div>
 </div>
 
@@ -163,6 +185,12 @@
                 <option value="Methodist">Методист</option>
             </select>
             <button type="submit">Зарегистрироваться</button>
+            <div class="auth-support">
+    <p><b>Техническая поддержка</b></p>
+    <p>Дугарова Арина</p>
+    <p>+7 123 456 78 90</p>
+    <p>support@mail.ru</p>
+</div>
         </form>
         <div class="auth-link"><a href="#" id="showLoginLink">Уже есть аккаунт? Войти</a></div>
     </div>
@@ -178,7 +206,7 @@
             <div class="nav-divider">Главная</div>
             <button class="nav-item" data-page="home">Главная</button>
             <button class="nav-item" data-page="passport">Модельный паспорт</button>
-            <button onclick="loadTeachers()">Преподаватели</button>
+            <button class="nav-item" onclick="loadTeachers()">Преподаватели</button>
             
             <div class="nav-divider">Параметр I</div>
             <button class="nav-item" data-page="academic">1.1 Результаты промежуточной аттестации (качество знаний)</button>
@@ -192,6 +220,13 @@
             <button class="nav-item" data-page="contests">2.4 Конкурсы профессионального мастерства</button>
             <button class="nav-item" data-page="expert">2.5 Участие в работе жюри</button>
             <button class="nav-item" data-page="technologies">2.6 Продуктивное использование новых образовательных технологий</button>
+        </div>
+        <div class="support-block">
+            <div><b>Техническая поддержка</b></div>
+            <div>Разработчик системы</div>
+            <div>Дугарова Арина</div>
+            <div>+7 123 456 7890</div>
+            <div>support@mail.ru</div>
         </div>
         <button class="logout-btn" id="logoutBtn">Выйти</button>
     </div>
@@ -1032,6 +1067,7 @@ if (p.parameter2?.educationalTechnologies?.length > 0) {
                     <div class="card-header">
                         <h2>Модельный паспорт</h2>
                         <button class="btn-primary" onclick="downloadPassport()">Скачать PDF</button>
+                        <button class="btn-primary" onclick="downloadPassportWord()">Скачать WORD</button>
                     </div>
                     
                     <div class="profile-info">
@@ -1101,6 +1137,55 @@ if (p.parameter2?.educationalTechnologies?.length > 0) {
             alert('Ошибка скачивания: ' + error.message);
         }
     }
+    async function downloadPassportWord() {
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/api/Passport/export-word`,
+            {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${currentToken}`
+                }
+            }
+        );
+
+        if (!response.ok)
+            throw new Error('Ошибка');
+
+        const blob = await response.blob();
+
+        const url =
+            window.URL.createObjectURL(blob);
+
+        const a =
+            document.createElement('a');
+
+        a.href = url;
+
+        a.download =
+            `Модельный_паспорт_${new Date()
+                .toISOString()
+                .slice(0,10)}.docx`;
+
+        document.body.appendChild(a);
+
+        a.click();
+
+        document.body.removeChild(a);
+
+        window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+
+        alert(
+            'Ошибка скачивания: '
+            + error.message
+        );
+
+    }
+}
 async function loadTeachers() {
     const content = document.getElementById('content');
 
