@@ -283,4 +283,97 @@ public class GraduationResultController : ControllerBase
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"ГИА_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.xlsx");
     }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher/{teacherId}")]
+    public async Task<IActionResult> GetTeacherItems(int teacherId)
+    {
+        var items = await _context.GraduationResults
+            .Include(x => x.AcademicYear)
+            .Where(x => x.TeacherId == teacherId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new GraduationResultDto
+            {
+                Id = x.Id,
+                AcademicYearId = x.AcademicYearId,
+                AcademicYearName = x.AcademicYear.Name,
+                StudentName = x.StudentName,
+                GroupName = x.GroupName,
+                Specialty = x.Specialty,
+                ThesisTopic = x.ThesisTopic,
+                Grade = x.Grade,
+                CreatedAt = x.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(items);
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher-item/{id}")]
+    public async Task<IActionResult> GetTeacherItem(int id)
+    {
+        var item = await _context.GraduationResults
+            .Include(x => x.AcademicYear)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        return Ok(new GraduationResultDto
+        {
+            Id = item.Id,
+            AcademicYearId = item.AcademicYearId,
+            AcademicYearName = item.AcademicYear.Name,
+            StudentName = item.StudentName,
+            GroupName = item.GroupName,
+            Specialty = item.Specialty,
+            ThesisTopic = item.ThesisTopic,
+            Grade = item.Grade,
+            CreatedAt = item.CreatedAt
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpPut("teacher-item/{id}")]
+    public async Task<IActionResult> UpdateTeacherItem(
+    int id,
+    UpdateGraduationResultRequest request)
+    {
+        var item = await _context.GraduationResults
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        item.AcademicYearId = request.AcademicYearId;
+        item.StudentName = request.StudentName;
+        item.GroupName = request.GroupName;
+        item.Specialty = request.Specialty;
+        item.ThesisTopic = request.ThesisTopic;
+        item.Grade = request.Grade;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Результат ГИА обновлён"
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpDelete("teacher-item/{id}")]
+    public async Task<IActionResult> DeleteTeacherItem(int id)
+    {
+        var item = await _context.GraduationResults
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        _context.GraduationResults.Remove(item);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Запись удалена"
+        });
+    }
 }

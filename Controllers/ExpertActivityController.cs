@@ -263,4 +263,92 @@ public class ExpertActivityController : ControllerBase
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"Экспертная_деятельность_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.xlsx");
     }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher/{teacherId}")]
+    public async Task<IActionResult> GetTeacherItems(int teacherId)
+    {
+        var items = await _context.Expertactivities
+            .Include(x => x.Academicyear)
+            .Include(x => x.Level)
+            .Where(x => x.Teacherid == teacherId)
+            .OrderByDescending(x => x.Createdat)
+            .Select(x => new ExpertActivityDto
+            {
+                Id = x.Id,
+                EventDate = x.Eventdate,
+                AcademicYearId = x.Academicyearid,
+                AcademicYearName = x.Academicyear != null ? x.Academicyear.Name : "",
+                EventName = x.Eventname,
+                LevelId = x.Levelid,
+                LevelName = x.Level != null ? x.Level.Name : "",
+                ActivityType = x.Activitytype,
+                DocumentDetails = x.Documentdetails,
+                CreatedAt = x.Createdat
+            })
+            .ToListAsync();
+
+        return Ok(items);
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher-item/{id}")]
+    public async Task<IActionResult> GetTeacherItem(int id)
+    {
+        var item = await _context.Expertactivities
+            .Include(x => x.Academicyear)
+            .Include(x => x.Level)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        return Ok(new ExpertActivityDto
+        {
+            Id = item.Id,
+            EventDate = item.Eventdate,
+            AcademicYearId = item.Academicyearid,
+            EventName = item.Eventname,
+            LevelId = item.Levelid,
+            ActivityType = item.Activitytype,
+            DocumentDetails = item.Documentdetails
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpPut("teacher-item/{id}")]
+    public async Task<IActionResult> UpdateTeacherItem(
+    int id,
+    UpdateExpertActivityRequest request)
+    {
+        var item = await _context.Expertactivities
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        item.Eventdate = request.EventDate;
+        item.Academicyearid = request.AcademicYearId;
+        item.Eventname = request.EventName;
+        item.Levelid = request.LevelId;
+        item.Activitytype = request.ActivityType;
+        item.Documentdetails = request.DocumentDetails;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Запись обновлена" });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpDelete("teacher-item/{id}")]
+    public async Task<IActionResult> DeleteTeacherItem(int id)
+    {
+        var item = await _context.Expertactivities
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        _context.Expertactivities.Remove(item);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Запись удалена" });
+    }
 }

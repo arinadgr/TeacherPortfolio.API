@@ -247,4 +247,85 @@ public class ElectronicResourceController : ControllerBase
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"ЭОР_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.xlsx");
     }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher/{teacherId}")]
+    public async Task<IActionResult> GetTeacherItems(int teacherId)
+    {
+        var items = await _context.ElectronicResources
+            .Include(x => x.AcademicYear)
+            .Where(x => x.TeacherId == teacherId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new ElectronicResourceDto
+            {
+                Id = x.Id,
+                AcademicYearId = x.AcademicYearId,
+                AcademicYearName = x.AcademicYear.Name,
+                Name = x.Name,
+                Topic = x.Topic,
+                InteractionForm = x.InteractionForm,
+                Link = x.Link,
+                CreatedAt = x.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(items);
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher-item/{id}")]
+    public async Task<IActionResult> GetTeacherItem(int id)
+    {
+        var item = await _context.ElectronicResources
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        return Ok(new ElectronicResourceDto
+        {
+            Id = item.Id,
+            AcademicYearId = item.AcademicYearId,
+            Name = item.Name,
+            Topic = item.Topic,
+            InteractionForm = item.InteractionForm,
+            Link = item.Link
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpPut("teacher-item/{id}")]
+    public async Task<IActionResult> UpdateTeacherItem(
+    int id,
+    UpdateElectronicResourceRequest request)
+    {
+        var item = await _context.ElectronicResources
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        item.AcademicYearId = request.AcademicYearId;
+        item.Name = request.Name;
+        item.Topic = request.Topic;
+        item.InteractionForm = request.InteractionForm;
+        item.Link = request.Link;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Обновлено" });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpDelete("teacher-item/{id}")]
+    public async Task<IActionResult> DeleteTeacherItem(int id)
+    {
+        var item = await _context.ElectronicResources
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        _context.ElectronicResources.Remove(item);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Удалено" });
+    }
 }

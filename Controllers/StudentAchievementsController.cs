@@ -379,4 +379,107 @@ public class StudentAchievementsController : ControllerBase
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"Достижения_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.xlsx");
     }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher/{teacherId}")]
+    public async Task<IActionResult> GetTeacherAchievements(int teacherId)
+    {
+        var achievements = await _context.Studentachievements
+            .Include(s => s.Academicyear)
+            .Include(s => s.Direction)
+            .Include(s => s.Level)
+            .Include(s => s.Result)
+            .Where(s => s.Teacherid == teacherId)
+            .OrderByDescending(s => s.Createdat)
+            .Select(s => new StudentAchievementResponse
+            {
+                Id = s.Id,
+                StudentName = s.Studentname,
+                AchievementType = s.Eventname,
+                Level = s.Level != null ? s.Level.Name : "Не указан",
+                AcademicYear = s.Academicyear != null ? s.Academicyear.Name : "Не указан",
+                Result = s.Result != null ? s.Result.Name : null,
+                EventDate = s.Eventdate,
+                EventOrganizer = s.Eventorganizer,
+                GroupName = s.Groupname,
+                ResultDescription = s.Resultdescription,
+                CreatedAt = s.Createdat
+            })
+            .ToListAsync();
+
+        return Ok(achievements);
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher-item/{id}")]
+    public async Task<IActionResult> GetTeacherAchievement(int id)
+    {
+        var item = await _context.Studentachievements
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        return Ok(new
+        {
+            id = item.Id,
+            studentName = item.Studentname,
+            achievementType = item.Eventname,
+            eventDate = item.Eventdate,
+            eventOrganizer = item.Eventorganizer,
+            groupName = item.Groupname,
+            academicyearId = item.Academicyearid,
+            levelId = item.Levelid,
+            resultId = item.Resultid
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpPut("teacher-item/{id}")]
+    public async Task<IActionResult> UpdateTeacherAchievement(
+    int id,
+    UpdateStudentAchievementRequest request)
+    {
+        var achievement = await _context.Studentachievements
+            .FirstOrDefaultAsync(a => a.Id == id);
+
+        if (achievement == null)
+            return NotFound();
+
+        achievement.Studentname = request.StudentName;
+        achievement.Eventname = request.AchievementType;
+        achievement.Eventdate = request.EventDate;
+        achievement.Eventorganizer = request.EventOrganizer;
+        achievement.Groupname = request.GroupName;
+        achievement.Resultdescription = request.ResultDescription;
+        achievement.Orderdetails = request.OrderDetails;
+        achievement.Documentlink = request.DocumentLink;
+        achievement.Academicyearid = request.AcademicyearId;
+        achievement.Directionid = request.DirectionId;
+        achievement.Levelid = request.LevelId;
+        achievement.Resultid = request.ResultId;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Запись обновлена"
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpDelete("teacher-item/{id}")]
+    public async Task<IActionResult> DeleteTeacherAchievement(int id)
+    {
+        var achievement = await _context.Studentachievements
+            .FirstOrDefaultAsync(a => a.Id == id);
+
+        if (achievement == null)
+            return NotFound();
+
+        _context.Studentachievements.Remove(achievement);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Запись удалена"
+        });
+    }
 }

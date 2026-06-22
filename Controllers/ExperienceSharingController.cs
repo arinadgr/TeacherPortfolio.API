@@ -279,4 +279,98 @@ public class ExperienceSharingController : ControllerBase
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"Трансляция_опыта_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.xlsx");
     }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher/{teacherId}")]
+    public async Task<IActionResult> GetTeacherItems(int teacherId)
+    {
+        var items = await _context.Experiencesharings
+            .Include(x => x.Level)
+            .Include(x => x.Format)
+            .Include(x => x.Sharingform)
+            .Where(x => x.Teacherid == teacherId)
+            .OrderByDescending(x => x.Createdat)
+            .Select(x => new ExperienceSharingDto
+            {
+                Id = x.Id,
+                LevelId = x.Levelid,
+                LevelName = x.Level != null ? x.Level.Name : "",
+                FormatId = x.Formatid,
+                FormatName = x.Format != null ? x.Format.Name : "",
+                SharingFormId = x.Sharingformid,
+                SharingFormName = x.Sharingform != null ? x.Sharingform.Name : "",
+                EventName = x.Eventname,
+                Topic = x.Topic,
+                EventDate = x.Eventdate,
+                Organizer = x.Organizer,
+                CreatedAt = x.Createdat
+            })
+            .ToListAsync();
+
+        return Ok(items);
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher-item/{id}")]
+    public async Task<IActionResult> GetTeacherItem(int id)
+    {
+        var item = await _context.Experiencesharings
+            .Include(x => x.Level)
+            .Include(x => x.Format)
+            .Include(x => x.Sharingform)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        return Ok(new ExperienceSharingDto
+        {
+            Id = item.Id,
+            LevelId = item.Levelid,
+            FormatId = item.Formatid,
+            SharingFormId = item.Sharingformid,
+            EventName = item.Eventname,
+            Topic = item.Topic,
+            EventDate = item.Eventdate,
+            Organizer = item.Organizer
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpPut("teacher-item/{id}")]
+    public async Task<IActionResult> UpdateTeacherItem(
+    int id,
+    UpdateExperienceSharingRequest request)
+    {
+        var item = await _context.Experiencesharings
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        item.Levelid = request.LevelId;
+        item.Formatid = request.FormatId;
+        item.Sharingformid = request.SharingFormId;
+        item.Eventname = request.EventName;
+        item.Topic = request.Topic;
+        item.Eventdate = request.EventDate;
+        item.Organizer = request.Organizer;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Запись обновлена" });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpDelete("teacher-item/{id}")]
+    public async Task<IActionResult> DeleteTeacherItem(int id)
+    {
+        var item = await _context.Experiencesharings
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        _context.Experiencesharings.Remove(item);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Запись удалена" });
+    }
 }

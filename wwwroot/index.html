@@ -1246,17 +1246,82 @@ async function getTeacherPassport() {
         try {
             await loadAcademicYears();
             let data;
-            if (
-                window.selectedTeacherId &&
-                moduleName === 'academic'
-            ) {
-                data = await api(
-                    `/api/AcademicPerformance/teacher/${window.selectedTeacherId}`
-                );
-            }
-else {
-    data = await api(cfg.listEndpoint);
-}
+
+        if (
+            window.selectedTeacherId &&
+            moduleName === 'academic'
+        ) {
+            data = await api(
+                `/api/AcademicPerformance/teacher/${window.selectedTeacherId}`
+            );
+        }
+        else if (
+            window.selectedTeacherId &&
+            moduleName === 'achievements'
+        ) {
+            data = await api(
+                `/api/StudentAchievements/teacher/${window.selectedTeacherId}`
+            );
+        }
+        else if (
+           window.selectedTeacherId &&
+            moduleName === 'graduation'
+        ) {
+            data = await api(
+                `/api/GraduationResult/teacher/${window.selectedTeacherId}`
+            );
+        }
+        else if (
+            window.selectedTeacherId &&
+            moduleName === 'methodical'
+        ) {
+            data = await api(
+                `/api/MethodicalMaterial/teacher/${window.selectedTeacherId}`
+            );
+        }
+        else if (
+            window.selectedTeacherId &&
+            moduleName === 'eor'
+        ) {
+            data = await api(
+                `/api/ElectronicResource/teacher/${window.selectedTeacherId}`
+            );
+        }
+        else if (
+            window.selectedTeacherId &&
+            moduleName === 'experience'
+        ) {
+            data = await api(
+                `/api/ExperienceSharing/teacher/${window.selectedTeacherId}`
+            );
+        }
+        else if (
+            window.selectedTeacherId &&
+            moduleName === 'contests'
+        ) {
+            data = await api(
+                `/api/TeacherContest/teacher/${window.selectedTeacherId}`
+            );
+        }
+        else if (
+            window.selectedTeacherId &&
+            moduleName === 'expert'
+        ) {
+            data = await api(
+                `/api/ExpertActivity/teacher/${window.selectedTeacherId}`
+            );
+        }
+        else if (
+            window.selectedTeacherId &&
+            moduleName === 'technologies'
+        ) {
+            data = await api(
+                `/api/EducationalTechnology/teacher/${window.selectedTeacherId}`
+            );
+        }
+        else {
+            data = await api(cfg.listEndpoint);
+        }
             
             let html = `
                 <div class="card">
@@ -1402,6 +1467,70 @@ if (
         `/api/AcademicPerformance/teacher-item/${id}`
     );
 }
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'achievements'
+) {
+    item = await api(
+        `/api/StudentAchievements/teacher-item/${id}`
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'graduation'
+) {
+    item = await api(
+        `/api/GraduationResult/teacher-item/${id}`
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'methodical'
+) {
+    item = await api(
+        `/api/MethodicalMaterial/teacher-item/${id}`
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'eor'
+) {
+    item = await api(
+        `/api/ElectronicResource/teacher-item/${id}`
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'experience'
+) {
+    item = await api(
+        `/api/ExperienceSharing/teacher-item/${id}`
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'contests'
+) {
+    item = await api(
+        `/api/TeacherContest/teacher-item/${id}`
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'expert'
+) {
+    item = await api(
+        `/api/ExpertActivity/teacher-item/${id}`
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'technologies'
+) {
+    item = await api(
+        `/api/EducationalTechnology/teacher-item/${id}`
+    );
+}
 else {
     item = await api(`${cfg.crudEndpoint}/${id}`);
 }
@@ -1530,6 +1659,88 @@ else {
     );
 
 }
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'achievements'
+) {
+
+    await api(
+        `/api/StudentAchievements/teacher-item/${id}`,
+        'PUT',
+        body
+    );
+
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'graduation'
+) {
+    await api(
+        `/api/GraduationResult/teacher-item/${id}`,
+        'PUT',
+        body
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'methodical'
+) {
+    await api(
+        `/api/MethodicalMaterial/teacher-item/${id}`,
+        'PUT',
+        body
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'eor'
+) {
+    await api(
+        `/api/ElectronicResource/teacher-item/${id}`,
+        'PUT',
+        body
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'experience'
+) {
+    await api(
+        `/api/ExperienceSharing/teacher-item/${id}`,
+        'PUT',
+        body
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'contests'
+) {
+    await api(
+        `/api/TeacherContest/teacher-item/${id}`,
+        'PUT',
+        body
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'expert'
+) {
+    await api(
+        `/api/ExpertActivity/teacher-item/${id}`,
+        'PUT',
+        body
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'technologies'
+) {
+    await api(
+        `/api/EducationalTechnology/teacher-item/${id}`,
+        'PUT',
+        body
+    );
+}
 else {
 
     await api(
@@ -1567,25 +1778,98 @@ async function deleteItem(id) {
     try {
 
         if (
-            window.selectedTeacherId &&
-            currentModule === 'academic'
-        ) {
+    window.selectedTeacherId &&
+    currentModule === 'academic'
+) {
 
-            await api(
-                `/api/AcademicPerformance/teacher-item/${id}`,
-                'DELETE'
-            );
+    await api(
+        `/api/AcademicPerformance/teacher-item/${id}`,
+        'DELETE'
+    );
 
-        }
-        else {
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'achievements'
+) {
 
-            await api(
-                `${cfg.crudEndpoint}/${id}`,
-                'DELETE'
-            );
+    await api(
+        `/api/StudentAchievements/teacher-item/${id}`,
+        'DELETE'
+    );
 
-        }
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'graduation'
+) {
+    await api(
+        `/api/GraduationResult/teacher-item/${id}`,
+        'DELETE'
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'methodical'
+) {
+    await api(
+        `/api/MethodicalMaterial/teacher-item/${id}`,
+        'DELETE'
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'eor'
+) {
+    await api(
+        `/api/ElectronicResource/teacher-item/${id}`,
+        'DELETE'
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'experience'
+) {
+    await api(
+        `/api/ExperienceSharing/teacher-item/${id}`,
+        'DELETE'
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'contests'
+) {
+    await api(
+        `/api/TeacherContest/teacher-item/${id}`,
+        'DELETE'
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'expert'
+) {
+    await api(
+        `/api/ExpertActivity/teacher-item/${id}`,
+        'DELETE'
+    );
+}
+else if (
+    window.selectedTeacherId &&
+    currentModule === 'technologies'
+) {
+    await api(
+        `/api/EducationalTechnology/teacher-item/${id}`,
+        'DELETE'
+    );
+}
+else {
 
+    await api(
+        `${cfg.crudEndpoint}/${id}`,
+        'DELETE'
+    );
+
+}
         loadModule(currentModule);
 
     } catch (e) {

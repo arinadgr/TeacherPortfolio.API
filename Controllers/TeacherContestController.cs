@@ -271,4 +271,96 @@ public class TeacherContestController : ControllerBase
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"Конкурсы_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.xlsx");
     }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher/{teacherId}")]
+    public async Task<IActionResult> GetTeacherItems(int teacherId)
+    {
+        var items = await _context.TeacherContests
+            .Include(x => x.AcademicYear)
+            .Where(x => x.TeacherId == teacherId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new TeacherContestDto
+            {
+                Id = x.Id,
+                AcademicYearId = x.AcademicYearId,
+                AcademicYearName = x.AcademicYear.Name,
+                ContestName = x.ContestName,
+                Organizer = x.Organizer,
+                Level = x.Level,
+                Result = x.Result,
+                OrderDetails = x.OrderDetails,
+                Link = x.Link,
+                DocumentPath = x.DocumentPath,
+                CreatedAt = x.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(items);
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher-item/{id}")]
+    public async Task<IActionResult> GetTeacherItem(int id)
+    {
+        var item = await _context.TeacherContests
+            .Include(x => x.AcademicYear)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        return Ok(new TeacherContestDto
+        {
+            Id = item.Id,
+            AcademicYearId = item.AcademicYearId,
+            AcademicYearName = item.AcademicYear.Name,
+            ContestName = item.ContestName,
+            Organizer = item.Organizer,
+            Level = item.Level,
+            Result = item.Result,
+            OrderDetails = item.OrderDetails,
+            Link = item.Link,
+            DocumentPath = item.DocumentPath
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpPut("teacher-item/{id}")]
+    public async Task<IActionResult> UpdateTeacherItem(
+    int id,
+    UpdateTeacherContestRequest request)
+    {
+        var item = await _context.TeacherContests
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        item.AcademicYearId = request.AcademicYearId;
+        item.ContestName = request.ContestName;
+        item.Organizer = request.Organizer;
+        item.Level = request.Level;
+        item.Result = request.Result;
+        item.OrderDetails = request.OrderDetails;
+        item.Link = request.Link;
+        item.DocumentPath = request.DocumentPath;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Запись обновлена" });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpDelete("teacher-item/{id}")]
+    public async Task<IActionResult> DeleteTeacherItem(int id)
+    {
+        var item = await _context.TeacherContests
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        _context.TeacherContests.Remove(item);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Запись удалена" });
+    }
 }

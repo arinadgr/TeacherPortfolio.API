@@ -271,4 +271,95 @@ public class MethodicalMaterialController : ControllerBase
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"Методические_материалы_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.xlsx");
     }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher/{teacherId}")]
+    public async Task<IActionResult> GetTeacherItems(int teacherId)
+    {
+        var items = await _context.Methodicalmaterials
+            .Include(x => x.Academicyear)
+            .Include(x => x.Materialtype)
+            .Where(x => x.Teacherid == teacherId)
+            .OrderByDescending(x => x.Createdat)
+            .Select(x => new MethodicalMaterialDto
+            {
+                Id = x.Id,
+                AcademicYearId = x.Academicyearid,
+                AcademicYearName = x.Academicyear.Name,
+                MaterialTypeId = x.Materialtypeid,
+                MaterialTypeName = x.Materialtype.Name,
+                Specialty = x.Specialty,
+                Topic = x.Topic,
+                InternetLink = x.Internetlink,
+                ApprovalDetails = x.Approvaldetails,
+                ReviewingOrganization = x.Reviewingorganization,
+                CreatedAt = x.Createdat
+            })
+            .ToListAsync();
+
+        return Ok(items);
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher-item/{id}")]
+    public async Task<IActionResult> GetTeacherItem(int id)
+    {
+        var item = await _context.Methodicalmaterials
+            .Include(x => x.Academicyear)
+            .Include(x => x.Materialtype)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        return Ok(new MethodicalMaterialDto
+        {
+            Id = item.Id,
+            AcademicYearId = item.Academicyearid,
+            MaterialTypeId = item.Materialtypeid,
+            Specialty = item.Specialty,
+            Topic = item.Topic,
+            InternetLink = item.Internetlink,
+            ApprovalDetails = item.Approvaldetails,
+            ReviewingOrganization = item.Reviewingorganization
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpPut("teacher-item/{id}")]
+    public async Task<IActionResult> UpdateTeacherItem(
+    int id,
+    UpdateMethodicalMaterialRequest request)
+    {
+        var item = await _context.Methodicalmaterials
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        item.Academicyearid = request.AcademicYearId;
+        item.Materialtypeid = request.MaterialTypeId;
+        item.Specialty = request.Specialty;
+        item.Topic = request.Topic;
+        item.Internetlink = request.InternetLink;
+        item.Approvaldetails = request.ApprovalDetails;
+        item.Reviewingorganization = request.ReviewingOrganization;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Обновлено" });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpDelete("teacher-item/{id}")]
+    public async Task<IActionResult> DeleteTeacherItem(int id)
+    {
+        var item = await _context.Methodicalmaterials
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        _context.Methodicalmaterials.Remove(item);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Удалено" });
+    }
 }

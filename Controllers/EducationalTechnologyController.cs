@@ -231,4 +231,87 @@ public class EducationalTechnologyController : ControllerBase
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"Технологии_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.xlsx");
     }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher/{teacherId}")]
+    public async Task<IActionResult> GetTeacherItems(int teacherId)
+    {
+        var items = await _context.Educationaltechnologies
+            .Where(x => x.Teacherid == teacherId)
+            .OrderByDescending(x => x.Createdat)
+            .Select(x => new EducationalTechnologyDto
+            {
+                Id = x.Id,
+                TechnologyName = x.Technologyname,
+                Purpose = x.Purpose,
+                Result = x.Result,
+                ResourceLink = x.Resourcelink,
+                CreatedAt = x.Createdat
+            })
+            .ToListAsync();
+
+        return Ok(items);
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher-item/{id}")]
+    public async Task<IActionResult> GetTeacherItem(int id)
+    {
+        var item = await _context.Educationaltechnologies
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        return Ok(new EducationalTechnologyDto
+        {
+            Id = item.Id,
+            TechnologyName = item.Technologyname,
+            Purpose = item.Purpose,
+            Result = item.Result,
+            ResourceLink = item.Resourcelink,
+            CreatedAt = item.Createdat
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpPut("teacher-item/{id}")]
+    public async Task<IActionResult> UpdateTeacherItem(
+    int id,
+    UpdateEducationalTechnologyRequest request)
+    {
+        var item = await _context.Educationaltechnologies
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        item.Technologyname = request.TechnologyName;
+        item.Purpose = request.Purpose;
+        item.Result = request.Result;
+        item.Resourcelink = request.ResourceLink;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Запись обновлена"
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpDelete("teacher-item/{id}")]
+    public async Task<IActionResult> DeleteTeacherItem(int id)
+    {
+        var item = await _context.Educationaltechnologies
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        _context.Educationaltechnologies.Remove(item);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Запись удалена"
+        });
+    }
 }
