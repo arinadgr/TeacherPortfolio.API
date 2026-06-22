@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using TeacherPortfolio.API.DTOs;
 using TeacherPortfolio.API.Models;
 using TeacherPortfolio.API.Services;
@@ -10,94 +9,75 @@ namespace TeacherPortfolio.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
-public class PassportController : ControllerBase
+[Authorize(Roles = "Methodist")]
+public class MethodistController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly ScoreCalculatorService _scoreCalculator;
 
-    public PassportController(AppDbContext context, ScoreCalculatorService scoreCalculator)
+    public MethodistController(AppDbContext context, ScoreCalculatorService scoreCalculator)
     {
         _context = context;
         _scoreCalculator = scoreCalculator;
     }
 
-    private User? GetCurrentUser()
+    [HttpGet("teachers")]
+    public async Task<ActionResult<List<TeacherListDto>>> GetTeachers()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null) return null;
-        var userId = int.Parse(userIdClaim.Value);
-        return _context.Users.FirstOrDefault(u => u.Id == userId);
+        var teachers = await _context.Teachers
+            .Include(t => t.User)
+            .Select(t => new TeacherListDto
+            {
+                Id = t.Id,
+                UserId = t.Userid,
+                FullName =
+                    (t.Lastname ?? "") + " " +
+                    (t.Firstname ?? "") + " " +
+                    (t.Middlename ?? ""),
+
+                Email = t.User!.Email,
+                Position = t.Position ?? ""
+            })
+            .ToListAsync();
+
+        return Ok(teachers);
+    }
+
+    [HttpGet("passport/{teacherId}")]
+    public async Task<IActionResult> GetPassport(int teacherId)
+    {
+        var teacher = await _context.Teachers
+            .Include(t => t.User)
+            .Include(t => t.Qualificationcategory)
+            .FirstOrDefaultAsync(t => t.Id == teacherId);
+
+        if (teacher == null)
+            return NotFound();
+
+        var passport = await BuildPassport(
+            teacher,
+            teacher.User!);
+
+        return Ok(passport);
     }
 
     private string GetFullName(Teacher teacher)
     {
         var parts = new List<string>();
-        if (!string.IsNullOrEmpty(teacher.Lastname)) parts.Add(teacher.Lastname);
-        if (!string.IsNullOrEmpty(teacher.Firstname)) parts.Add(teacher.Firstname);
-        if (!string.IsNullOrEmpty(teacher.Middlename)) parts.Add(teacher.Middlename);
-        return parts.Count > 0 ? string.Join(" ", parts) : "Преподаватель";
+
+        if (!string.IsNullOrEmpty(teacher.Lastname))
+            parts.Add(teacher.Lastname);
+
+        if (!string.IsNullOrEmpty(teacher.Firstname))
+            parts.Add(teacher.Firstname);
+
+        if (!string.IsNullOrEmpty(teacher.Middlename))
+            parts.Add(teacher.Middlename);
+
+        return parts.Count > 0
+            ? string.Join(" ", parts)
+            : "Преподаватель";
     }
-
-    // ========== ОСНОВНОЙ МЕТОД ПОЛУЧЕНИЯ ПАСПОРТА ==========
-    [HttpGet]
-    public async Task<IActionResult> GetPassport()
-    {
-        var user = GetCurrentUser();
-        if (user == null) return Unauthorized();
-
-        var teacher = await _context.Teachers
-            .Include(t => t.Qualificationcategory)
-            .Include(t => t.User)
-            .FirstOrDefaultAsync(t => t.Userid == user.Id);
-
-        if (teacher == null)
-            return NotFound("Профиль преподавателя не найден");
-
-        var passport = await BuildPassport(teacher, user);
-        return Ok(passport);
-    }
-
-    // ========== ЭКСПОРТ В PDF ==========
-    [HttpGet("export-pdf")]
-    public async Task<IActionResult> ExportToPdf()
-    {
-        var user = GetCurrentUser();
-        if (user == null) return Unauthorized();
-
-        var teacher = await _context.Teachers
-            .Include(t => t.Qualificationcategory)
-            .Include(t => t.User)
-            .FirstOrDefaultAsync(t => t.Userid == user.Id);
-
-        if (teacher == null)
-            return NotFound("Профиль преподавателя не найден");
-
-        var passport = await BuildPassport(teacher, user);
-
-        var pdfService = HttpContext.RequestServices.GetRequiredService<PdfService>();
-        var pdfBytes = pdfService.GeneratePassportPdf(passport);
-
-        return File(pdfBytes, "application/pdf", $"Модельный_паспорт_{GetFullName(teacher)}_{DateTime.Now:yyyyMMdd}.pdf");
-    }
-    [HttpGet("export-word")]
-    public async Task<IActionResult> ExportToWord()
-    {
-        var user = GetCurrentUser();
-        if (user == null) return Unauthorized();
-
-        var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.Userid == user.Id);
-        if (teacher == null) return NotFound("Профиль не найден");
-
-        var passport = await BuildPassport(teacher, user);
-        var wordService = HttpContext.RequestServices.GetRequiredService<WordExportService>();
-        var wordBytes = wordService.GeneratePassportWord(passport);
-
-        return File(wordBytes, "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            $"Модельный_паспорт_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.docx");
-    }
-
-    // ========== ВСПОМОГАТЕЛЬНЫЙ МЕТОД ДЛЯ ФОРМИРОВАНИЯ ПАСПОРТА ==========
     private async Task<ModelPassportDto> BuildPassport(Teacher teacher, User user)
     {
         var passport = new ModelPassportDto();
@@ -352,22 +332,5 @@ public class PassportController : ControllerBase
         };
 
         return passport;
-    }
-
-    [Authorize(Roles = "Methodist")]
-    [HttpGet("teacher/{teacherId}")]
-    public async Task<IActionResult> GetTeacherPassport(int teacherId)
-    {
-        var teacher = await _context.Teachers
-            .Include(t => t.Qualificationcategory)
-            .Include(t => t.User)
-            .FirstOrDefaultAsync(t => t.Id == teacherId);
-
-        if (teacher == null)
-            return NotFound("Преподаватель не найден");
-
-        var passport = await BuildPassport(teacher, teacher.User!);
-
-        return Ok(passport);
     }
 }

@@ -168,6 +168,41 @@ public class StudentAchievementsController : ControllerBase
         return Ok(new { message = "Достижение успешно добавлено", id = achievement.Id });
     }
 
+    [HttpGet("achievements/{id}")]
+    public async Task<IActionResult> GetAchievement(int id)
+    {
+        var user = GetCurrentUser();
+        if (user == null)
+            return Unauthorized();
+
+        var teacher = await _context.Teachers
+            .FirstOrDefaultAsync(t => t.Userid == user.Id);
+
+        if (teacher == null)
+            return NotFound();
+
+        var item = await _context.Studentachievements
+            .FirstOrDefaultAsync(x =>
+                x.Id == id &&
+                x.Teacherid == teacher.Id);
+
+        if (item == null)
+            return NotFound();
+
+        return Ok(new
+        {
+            id = item.Id,
+            studentName = item.Studentname,
+            achievementType = item.Eventname,
+            eventDate = item.Eventdate,
+            eventOrganizer = item.Eventorganizer,
+            groupName = item.Groupname,
+            academicyearId = item.Academicyearid,
+            levelId = item.Levelid,
+            resultId = item.Resultid
+        });
+    }
+
     [HttpDelete("achievements/{id}")]
     public async Task<IActionResult> DeleteAchievement(int id)
     {

@@ -158,7 +158,10 @@
             <input type="text" id="regMiddleName" placeholder="Отчество">
             <input type="text" id="regPosition" placeholder="Должность" value="Преподаватель">
             <input type="text" id="regWorkplace" placeholder="Место работы" value="ГБПОУ ИО ИРКПО">
-            <select id="regRole"><option value="Teacher">Преподаватель</option></select>
+            <select id="regRole">
+                <option value="Teacher">Преподаватель</option>
+                <option value="Methodist">Методист</option>
+            </select>
             <button type="submit">Зарегистрироваться</button>
         </form>
         <div class="auth-link"><a href="#" id="showLoginLink">Уже есть аккаунт? Войти</a></div>
@@ -175,6 +178,7 @@
             <div class="nav-divider">Главная</div>
             <button class="nav-item" data-page="home">Главная</button>
             <button class="nav-item" data-page="passport">Модельный паспорт</button>
+            <button onclick="loadTeachers()">Преподаватели</button>
             
             <div class="nav-divider">Параметр I</div>
             <button class="nav-item" data-page="academic">1.1 Результаты промежуточной аттестации (качество знаний)</button>
@@ -213,6 +217,7 @@
     let materialTypesCache = [];
     let specialtiesCache = [];
     let levelsCache = [];
+    let resultsCache = [];
 
     const RUSSIAN_FIELDS = {
         'academicYearName': 'Учебный год',
@@ -244,7 +249,8 @@
         'groupName': 'Группа',
         'link': 'Ссылка',
         'resourceLink': 'Ссылка',
-        'documentPath': 'расположение файла'
+        'documentPath': 'расположение файла',
+        'documentDetails': 'Подтверждающий документ'
     };
 
     const MODULES = {
@@ -287,7 +293,7 @@
                 { name: 'eventDate', label: 'Дата', type: 'date', required: true },
                 { name: 'eventOrganizer', label: 'Организатор', type: 'text' },
                 { name: 'groupName', label: 'Группа', type: 'text' },
-                {name: 'academicyearId', label: 'Учебный год', type: 'select', options: 'academicYears', required: true},
+                {name: 'academicYearId', label: 'Учебный год', type: 'select', options: 'academicYears', required: true},
                 {name: 'levelId', label: 'Уровень', type: 'select', required: true, options: 'levels'},
                 {name: 'resultId', label: 'Результат', type: 'select', options: 'results'}
             ],
@@ -344,7 +350,7 @@
                 { name: 'contestName', label: 'Конкурс', type: 'text', required: true },
                 { name: 'organizer', label: 'Организатор', type: 'text', required: true },
                 { name: 'levelId', label: 'Уровень', type: 'select', options:'levels', required: true },
-                { name: 'result', label: 'Результат', type: 'select', required: true },
+                { name: 'resultId', label: 'Результат', type: 'select', required: true, options: 'results' },
                 { name: 'link', label: 'Ссылка', type: 'text' },
                 {name: 'documentPath', label: 'Подтверждающий документ', type: 'text'}
             ],
@@ -357,10 +363,12 @@
             exportBase: '/api/ExpertActivity',
             fields: [
                 { name: 'eventName', label: 'Мероприятие', type: 'text', required: true },
+                { name: 'levelId', label: 'Уровень', type: 'select', options: 'levels', required: true },
                 { name: 'eventDate', label: 'Дата', type: 'date' },
-                { name: 'activityType', label: 'Тип деятельности', type: 'text' }
+                { name: 'activityType', label: 'Тип деятельности', type: 'text' },
+                { name: 'documentDetails', label: 'Подтверждающий документ', type: 'text' }
             ],
-            display: ['eventName', 'levelName', 'eventDate', 'activityType']
+            display: ['eventName', 'levelName', 'eventDate', 'activityType', 'documentDetails']
         },
         technologies: { 
             title: '2.6 Продуктивное использование новых образовательных технологий', 
@@ -370,7 +378,7 @@
             fields: [
                 { name: 'technologyName', label: 'Технология', type: 'text', required: true },
                 { name: 'purpose', label: 'Цель', type: 'text', required: true },
-                { name: 'result', label: 'Результат', type: 'text', required: true },
+                { name: 'result', label: 'Результат', type: 'text', required: true},
                 { name: 'resourceLink', label: 'Ссылка', type: 'text' }
             ],
             display: ['technologyName', 'purpose', 'result', 'resourceLink']
@@ -399,7 +407,7 @@
 
     async function loadAcademicYears() {
         try {
-            const response = await fetch(`${API_URL}/api/Academicyears`, {
+            const response = await fetch(`${API_URL}/api/Reference/academicyears`, {
                 headers: { 'Authorization': `Bearer ${currentToken}` }
             });
             if (response.ok) {
@@ -433,7 +441,7 @@
 
     async function loadMaterialTypes() {
     try {
-        const response = await fetch(`${API_URL}/api/MethodicalMaterialTypes`, {
+        const response = await fetch(`${API_URL}/api/Reference/methodicalmaterialtypes`, {
             headers: {'Authorization': `Bearer ${currentToken}`}
         });
         if (response.ok) {
@@ -545,6 +553,34 @@ async function loadLevels() {
             ];
         }
     return levelsCache;
+}
+async function loadResults() {
+    try {
+        const response = await fetch(`${API_URL}/api/Reference/participationresults`, {
+            headers: {
+                'Authorization': `Bearer ${currentToken}`}
+        });
+        if (response.ok) {
+            resultsCache = await response.json();
+        } else{
+            resultsCache = [
+                {id: 1, name: 'Победитель'},
+                {id: 2, name: 'Призер'},
+                {id: 3, name: 'Лауреат'},
+                {id: 4, name: 'Дипломант'},
+                {id: 5, name: 'Участник'}
+            ];
+        }
+    } catch (e) {
+        resultsCache = [
+                {id: 1, name: 'Победитель'},
+                {id: 2, name: 'Призер'},
+                {id: 3, name: 'Лауреат'},
+                {id: 4, name: 'Дипломант'},
+                {id: 5, name: 'Участник'}
+            ];
+        }
+    return resultsCache;
 }
 
     async function exportData(moduleName, type) {
@@ -719,12 +755,23 @@ async function saveProfile() {
 }
 
     async function loadPassport() {
+    const content = document.getElementById('content');
+    content.innerHTML = '<div class="loading">Загрузка...</div>';
+
+    try {
+        const p = await api('/api/Passport');
+        renderPassport(p);
+
+    } catch (e) {
+        content.innerHTML =
+            '<div class="card"><div class="alert-error">Ошибка загрузки паспорта</div></div>';
+    }
+}
+
+    function renderPassport(p, isMethodist = false) {
         const content = document.getElementById('content');
-        content.innerHTML = '<div class="loading">Загрузка...</div>';
-        try {
-            const p = await api('/api/Passport');
-            
-            // Функция для безопасного отображения значения
+        try{
+    // Функция для безопасного отображения значения
             const formatValue = (value) => {
                 if (!value || value === 'Категория не рекомендуется') return '—';
                 return value;
@@ -734,7 +781,15 @@ async function saveProfile() {
             let academicTable = '';
             if (p.parameter1?.academicPerformances?.length > 0) {
                 academicTable = `
-                    <h4>1.1. Успеваемость и качество знаний</h4>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4>1.1. Результаты промежуточной аттестации</h4>
+                        <button
+                        class="btn-primary"
+                        onclick="loadModule('academic')">
+                        Открыть раздел
+                        </button>
+                        </div>
+                        
                     <table class="passport-table">
                         <thead><tr><th>Учебный год</th><th>Дисциплина</th><th>Группа</th><th>Качество %</th><th>Успеваемость %</th></tr></thead>
                         <tbody>
@@ -745,11 +800,52 @@ async function saveProfile() {
                     </table>
                 `;
             }
-            
+            let graduationTable = '';
+            if (p.parameter1?.graduationResults?.length > 0) {
+            graduationTable = `
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4>1.2 Результаты ГИА<h4>
+                        <button
+                        class="btn-primary"
+                        onclick="loadModule('graduation')">
+                        Открыть раздел
+                        </button>
+                        </div>
+            <table class="passport-table">
+                    <thead>
+                        <tr>
+                            <th>Учебный год</th>
+                            <th>Студент</th>
+                            <th>Группа</th>
+                            <th>Тема ВКР</th>
+                            <th>Оценка</th>
+                        </tr>
+                    </thead>
+                    <tbody> 
+                        ${p.parameter1.graduationResults.map(item => `
+                        <tr>
+                        <td>${item.academicYear || '—'}</td>
+                        <td>${item.studentName || '—'}</td>
+                        <td>${item.groupName || '—'}</td>
+                        <td>${item.thesisTopic || '—'}</td>
+                        <td>${item.grade || '—'}</td>
+                        </tr>
+                        `).join('')}
+                    </tbody>
+            </table>
+    `;
+}
             let achievementsTable = '';
             if (p.parameter1?.studentAchievements?.length > 0) {
                 achievementsTable = `
-                    <h4>1.3. Достижения студентов</h4>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4>1.3 Результаты участия обучающихся в интеллектуальных и творческих конкурсах</h4>
+                        <button
+                        class="btn-primary"
+                        onclick="loadModule('achievements')">
+                        Открыть раздел
+                        </button>
+                        </div>
                     <table class="passport-table">
                         <thead><tr><th>Студент</th><th>Мероприятие</th><th>Уровень</th><th>Дата</th><th>Результат</th></tr></thead>
                         <tbody>
@@ -764,7 +860,14 @@ async function saveProfile() {
             let methodicalTable = '';
             if (p.parameter2?.methodicalMaterials?.length > 0) {
                 methodicalTable = `
-                    <h4>2.1.1. Методические материалы</h4>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4>2.1. Результаты участия в разработке программно-методического сопровождения</h4>
+                        <button
+                        class="btn-primary"
+                        onclick="loadModule('methodical')">
+                        Открыть раздел
+                        </button>
+                        </div>
                     <table class="passport-table">
                         <thead><tr><th>Период</th><th>Тип</th><th>Тема</th></tr></thead>
                         <tbody>
@@ -775,11 +878,81 @@ async function saveProfile() {
                     </table>
                 `;
             }
-            
+let eorTable = '';
+if (p.parameter2?.electronicResources?.length > 0) {
+    eorTable = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4>2.2. Использование электронных образовательных ресурсов (ЭОР)</h4>
+                        <button
+                        class="btn-primary"
+                        onclick="loadModule('eor')">
+                        Открыть раздел
+                        </button>
+                        </div>
+        <table class="passport-table">
+            <thead>
+                <tr>
+                    <th>Учебный год</th>
+                    <th>Название</th>
+                    <th>Тема</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${p.parameter2.electronicResources.map(item => `
+                    <tr>
+                        <td>${item.academicYear || '—'}</td>
+                        <td>${item.name || '—'}</td>
+                        <td>${item.topic || '—'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+let experienceTable = '';
+if (p.parameter2?.experienceSharings?.length > 0) {
+    experienceTable = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4>2.3. Транслирование опыта практических результатов</h4>
+                        <button
+                        class="btn-primary"
+                        onclick="loadModule('experience')">
+                        Открыть раздел
+                        </button>
+                        </div>
+        <table class="passport-table">
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Мероприятие</th>
+                    <th>Уровень</th>
+                    <th>Тема</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${p.parameter2.experienceSharings.map(item => `
+                    <tr>
+                        <td>${item.eventDate || '—'}</td>
+                        <td>${item.eventName || '—'}</td>
+                        <td>${item.level || '—'}</td>
+                        <td>${item.topic || '—'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}            
             let contestsTable = '';
             if (p.parameter2?.teacherContests?.length > 0) {
                 contestsTable = `
-                    <h4>2.4. Конкурсы профмастерства</h4>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4>2.4. Конкурсы профессионального мастерства</h4>
+                        <button
+                        class="btn-primary"
+                        onclick="loadModule('contests')">
+                        Открыть раздел
+                        </button>
+                        </div>
                     <table class="passport-table">
                         <thead><tr><th>Учебный год</th><th>Конкурс</th><th>Уровень</th><th>Результат</th></tr></thead>
                         <tbody>
@@ -790,7 +963,70 @@ async function saveProfile() {
                     </table>
                 `;
             }
-            
+    let expertTable = '';
+if (p.parameter2?.expertActivities?.length > 0) {
+    expertTable = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4>2.5. Участие в работе жюри</h4>
+                        <button
+                        class="btn-primary"
+                        onclick="loadModule('expert')">
+                        Открыть раздел
+                        </button>
+                        </div>
+        <table class="passport-table">
+            <thead>
+                <tr>
+                    <th>Дата</th>
+                    <th>Мероприятие</th>
+                    <th>Уровень</th>
+                    <th>Тип деятельности</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${p.parameter2.expertActivities.map(item => `
+                    <tr>
+                        <td>${item.eventDate || '—'}</td>
+                        <td>${item.eventName || '—'}</td>
+                        <td>${item.level || '—'}</td>
+                        <td>${item.activityType || '—'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
+let technologiesTable = '';
+if (p.parameter2?.educationalTechnologies?.length > 0) {
+    technologiesTable = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <h4>2.6. Продуктивное использование новых образовательных технологий</h4>
+                        <button
+                        class="btn-primary"
+                        onclick="loadModule('technologies')">
+                        Открыть раздел
+                        </button>
+                        </div>
+        <table class="passport-table">
+            <thead>
+                <tr>
+                    <th>Технология</th>
+                    <th>Цель</th>
+                    <th>Результат</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${p.parameter2.educationalTechnologies.map(item => `
+                    <tr>
+                        <td>${item.technologyName || '—'}</td>
+                        <td>${item.purpose || '—'}</td>
+                        <td>${item.result || '—'}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
+}
             content.innerHTML = `
                 <div class="card">
                     <div class="card-header">
@@ -817,17 +1053,29 @@ async function saveProfile() {
                     
                     <div class="passport-preview">
                         <h3>Параметр I. Результаты освоения образовательных программ</h3>
-                        ${academicTable || '<p>Нет данных по успеваемости</p>'}
-                        ${achievementsTable || '<p>Нет данных по достижениям студентов</p>'}
+                        ${academicTable || ''}
+                        ${graduationTable || ''}
+                        ${achievementsTable || ''}
                     </div>
                     
                     <div class="passport-preview">
                         <h3>Параметр II. Личный вклад в повышение качества образования</h3>
-                        ${methodicalTable || '<p>Нет данных по методическим материалам</p>'}
-                        ${contestsTable || '<p>Нет данных по конкурсам</p>'}
+                        ${methodicalTable || ''}
+                        ${eorTable || ''}
+                        ${experienceTable || ''}
+                        ${contestsTable || ''}
+                        ${expertTable || ''}
+                        ${technologiesTable || ''}
                     </div>
-                </div>
-            `;
+                    ${isMethodist ? `
+                    <div style="margin-top:20px;">
+                        <button class="btn-primary" onclick="loadTeachers()">
+                            Назад к списку преподавателей
+                            </button>
+                            </div>
+                            ` : ''}
+                            </div>
+                            `;
         } catch (e) {
             content.innerHTML = '<div class="card"><div class="alert-error">Ошибка загрузки паспорта</div></div>';
         }
@@ -853,7 +1101,130 @@ async function saveProfile() {
             alert('Ошибка скачивания: ' + error.message);
         }
     }
+async function loadTeachers() {
+    const content = document.getElementById('content');
 
+    content.innerHTML = '<div class="loading">Загрузка...</div>';
+
+    try {
+
+        const teachers = await api('/api/Methodist/teachers');
+
+        content.innerHTML = `
+            <div class="card">
+                <h2>Список преподавателей</h2>
+
+                <table class="passport-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>ФИО</th>
+                            <th>Email</th>
+                            <th>Должность</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        ${teachers.map(t => `
+                            <tr>
+                                <td>${t.id}</td>
+                                <td>${t.fullName}</td>
+                                <td>${t.email}</td>
+                                <td>${t.position}</td>
+
+                                <td>
+                                    <button
+                                        class="btn-primary"
+                                        onclick="loadTeacherPassport(${t.id})">
+                                        Паспорт
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+    } catch (e) {
+
+        content.innerHTML = `
+            <div class="alert-error">
+                Ошибка загрузки преподавателей
+            </div>
+        `;
+    }
+}
+
+async function loadTeacherPassport(id) {
+    const content = document.getElementById('content');
+    content.innerHTML = '<div class="loading">Загрузка...</div>';
+
+    try {
+        const p = await api(`/api/Methodist/passport/${id}`);
+
+        renderPassport(p, true);
+
+    } catch (e) {
+        console.error(e);
+
+        content.innerHTML = `
+            <div class="card">
+                <div class="alert-error">
+                    Ошибка загрузки паспорта
+                </div>
+            </div>
+        `;
+    }
+}
+
+    
+async function getTeacherPassport() {
+
+    const teacherId =
+        document.getElementById('teacherIdInput').value;
+
+    if (!teacherId) {
+        alert('Введите ID преподавателя');
+        return;
+    }
+
+    try {
+
+        const passport =
+            await api(`/api/Methodist/passport/${teacherId}`);
+
+        document.getElementById(
+            'teacherPassportResult'
+        ).innerHTML = `
+            <div class="card">
+                <h3>${passport.fullName}</h3>
+
+                <p><b>Должность:</b>
+                ${passport.position}</p>
+
+                <p><b>Место работы:</b>
+                ${passport.workplace}</p>
+
+                <p><b>Email:</b>
+                ${passport.email}</p>
+            </div>
+        `;
+
+    } catch (e) {
+
+    console.error(e);
+
+    document.getElementById(
+        'teacherPassportResult'
+    ).innerHTML = `
+        <div class="alert-error">
+            Ошибка: ${e.message}
+        </div>
+    `;
+}
+}
     async function loadModule(moduleName) {
         const cfg = MODULES[moduleName];
         if (!cfg) { loadHome(); return; }
@@ -918,6 +1289,7 @@ async function saveProfile() {
     await loadMaterialTypes();
     await loadSpecialties();
     await loadLevels();
+    await loadResults();
     let fieldsHtml = '';
     for (const field of cfg.fields) {
         let inputHtml = '';
@@ -935,6 +1307,10 @@ async function saveProfile() {
                 for (const level of levelsCache) {
                     inputHtml += `<option value="${level.id}">${level.name}</option>`;
                 }
+             } else if (field.options === 'results') {
+                for (const result of resultsCache) {
+                    inputHtml += `<option value="${result.id}">${result.name}</option>`;
+                }  
             } else if (field.options === 'specialties') {
                 for (const item of specialtiesCache) {
                     inputHtml += `<option value="${item.name}">${item.name}</option>`;
@@ -986,61 +1362,147 @@ async function saveProfile() {
     }
 
     async function editItem(id) {
-        const cfg = MODULES[currentModule];
-        try {
-            await loadAcademicYears();
-            const item = await api(`${cfg.crudEndpoint}/${id}`);
-            
-            let fieldsHtml = '';
-            for (const field of cfg.fields) {
-                let val = item[field.name] || '';
-                if (field.type === 'date' && val) val = val.split('T')[0];
-                
-                let inputHtml = '';
-                if (field.type === 'select' && field.options === 'academicYears') {
-                    inputHtml = `<select id="field_${field.name}">`;
+    const cfg = MODULES[currentModule];
+
+    await loadAcademicYears();
+    await loadMaterialTypes();
+    await loadSpecialties();
+    await loadLevels();
+    await loadResults();
+
+    try {
+        const item = await api(`${cfg.crudEndpoint}/${id}`);
+
+        let fieldsHtml = '';
+
+        for (const field of cfg.fields) {
+
+            let val = item[field.name] || '';
+
+            if (field.type === 'date' && val) {
+                val = val.split('T')[0];
+            }
+
+            let inputHtml = '';
+
+            if (field.type === 'select') {
+
+                inputHtml = `<select id="field_${field.name}">`;
+
+                if (field.options === 'academicYears') {
+
                     for (const year of academicYearsCache) {
                         const selected = year.id == val ? 'selected' : '';
                         inputHtml += `<option value="${year.id}" ${selected}>${year.name}</option>`;
                     }
-                    inputHtml += `</select>`;
-                } else if (field.type === 'date') {
-                    inputHtml = `<input type="date" id="field_${field.name}" value="${val}">`;
-                } else if (field.type === 'number') {
-                    inputHtml = `<input type="number" step="0.1" id="field_${field.name}" value="${val}">`;
-                } else {
-                    inputHtml = `<input type="text" id="field_${field.name}" value="${val}">`;
-                }
-                fieldsHtml += `<div class="form-group"><label>${field.label}</label>${inputHtml}</div>`;
-            }
-            openModal('Редактирование записи', fieldsHtml);
-            
-            document.getElementById('modalSaveBtn').onclick = async () => {
-                const body = {};
-                for (const field of cfg.fields) {
-                    let value = document.getElementById(`field_${field.name}`)?.value || '';
-                    if (field.type === 'number') {
-                        body[field.name] = value ? parseFloat(value) : 0;
-                    } else if (field.type === 'date') {
-                        body[field.name] = value ? formatDate(value) : null;
-                    } else if (field.type === 'select') {
-                        body[field.name] = value ? parseInt(value) : 0;
-                    } else {
-                        body[field.name] = value;
+
+                } else if (field.options === 'materialTypes') {
+
+                    for (const type of materialTypesCache) {
+                        const selected = type.id == val ? 'selected' : '';
+                        inputHtml += `<option value="${type.id}" ${selected}>${type.name}</option>`;
                     }
+
+                } else if (field.options === 'levels') {
+
+                    for (const level of levelsCache) {
+                        const selected = level.id == val ? 'selected' : '';
+                        inputHtml += `<option value="${level.id}" ${selected}>${level.name}</option>`;
+                    }
+
+                } else if (field.options === 'results') {
+
+                    for (const result of resultsCache) {
+                        const selected = result.id == val ? 'selected' : '';
+                        inputHtml += `<option value="${result.id}" ${selected}>${result.name}</option>`;
+                    }
+
+                } else if (field.options === 'specialties') {
+
+                    for (const spec of specialtiesCache) {
+                        const selected = spec.name == val ? 'selected' : '';
+                        inputHtml += `<option value="${spec.name}" ${selected}>${spec.name}</option>`;
+                    }
+
                 }
-                try {
-                    await api(`${cfg.crudEndpoint}/${id}`, 'PUT', body);
-                    closeModal();
-                    loadModule(currentModule);
-                } catch (e) {
-                    alert('Ошибка: ' + e.message);
-                }
-            };
-        } catch (e) {
-            alert('Ошибка загрузки: ' + e.message);
+
+                inputHtml += `</select>`;
+
+            } else if (field.type === 'date') {
+
+                inputHtml = `<input type="date" id="field_${field.name}" value="${val}">`;
+
+            } else if (field.type === 'number') {
+
+                inputHtml = `<input type="number" step="0.1" id="field_${field.name}" value="${val}">`;
+
+            } else {
+
+                inputHtml = `<input type="text" id="field_${field.name}" value="${val}">`;
+
+            }
+
+            fieldsHtml += `
+                <div class="form-group">
+                    <label>${field.label}</label>
+                    ${inputHtml}
+                </div>
+            `;
         }
+
+        openModal('Редактирование записи', fieldsHtml);
+
+        document.getElementById('modalSaveBtn').onclick = async () => {
+
+            const body = {};
+
+            for (const field of cfg.fields) {
+
+                let value = document.getElementById(`field_${field.name}`)?.value || '';
+
+                if (field.type === 'number') {
+
+                    body[field.name] = value ? parseFloat(value) : 0;
+
+                } else if (field.type === 'date') {
+
+                    body[field.name] = value ? formatDate(value) : null;
+
+                } else if (field.type === 'select') {
+
+                    if (field.options === 'specialties') {
+                        body[field.name] = value;
+                    } else {
+                        body[field.name] = value ? parseInt(value) : 0;
+                    }
+
+                } else {
+
+                    body[field.name] = value;
+
+                }
+            }
+
+            try {
+
+                await api(`${cfg.crudEndpoint}/${id}`, 'PUT', body);
+
+                closeModal();
+                loadModule(currentModule);
+
+            } catch (e) {
+
+                alert('Ошибка: ' + e.message);
+
+            }
+        };
+
+    } catch (e) {
+
+        alert('Ошибка загрузки: ' + e.message);
+
     }
+}
 
     async function deleteItem(id) {
         if (!confirm('Удалить запись?')) return;
@@ -1062,9 +1524,9 @@ async function saveProfile() {
     function loadPage(page) {
         document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
         const activeBtn = document.querySelector(`.nav-item[data-page="${page}"]`);
-        if (activeBtn) activeBtn.classList.add('active');
         if (page === 'home') loadHome();
         else if (page === 'passport') loadPassport();
+        else if (page === 'methodist') loadMethodistPassport();
         else loadModule(page);
     }
 
