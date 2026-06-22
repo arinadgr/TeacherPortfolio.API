@@ -1158,6 +1158,8 @@ async function loadTeachers() {
 }
 
 async function loadTeacherPassport(id) {
+    window.selectedTeacherId = id;
+
     const content = document.getElementById('content');
     content.innerHTML = '<div class="loading">Загрузка...</div>';
 
@@ -1227,6 +1229,14 @@ async function getTeacherPassport() {
 }
     async function loadModule(moduleName) {
         const cfg = MODULES[moduleName];
+
+        console.log(
+            'TeacherId:',
+            window.selectedTeacherId,
+            'Module:',
+            moduleName
+        );
+
         if (!cfg) { loadHome(); return; }
         
         currentModule = moduleName;
@@ -1235,7 +1245,18 @@ async function getTeacherPassport() {
         
         try {
             await loadAcademicYears();
-            const data = await api(cfg.listEndpoint);
+            let data;
+            if (
+                window.selectedTeacherId &&
+                moduleName === 'academic'
+            ) {
+                data = await api(
+                    `/api/AcademicPerformance/teacher/${window.selectedTeacherId}`
+                );
+            }
+else {
+    data = await api(cfg.listEndpoint);
+}
             
             let html = `
                 <div class="card">
@@ -1371,7 +1392,19 @@ async function getTeacherPassport() {
     await loadResults();
 
     try {
-        const item = await api(`${cfg.crudEndpoint}/${id}`);
+        let item;
+
+if (
+    window.selectedTeacherId &&
+    currentModule === 'academic'
+) {
+    item = await api(
+        `/api/AcademicPerformance/teacher-item/${id}`
+    );
+}
+else {
+    item = await api(`${cfg.crudEndpoint}/${id}`);
+}
 
         let fieldsHtml = '';
 
@@ -1485,7 +1518,27 @@ async function getTeacherPassport() {
 
             try {
 
-                await api(`${cfg.crudEndpoint}/${id}`, 'PUT', body);
+                if (
+    window.selectedTeacherId &&
+    currentModule === 'academic'
+) {
+
+    await api(
+        `/api/AcademicPerformance/teacher-item/${id}`,
+        'PUT',
+        body
+    );
+
+}
+else {
+
+    await api(
+        `${cfg.crudEndpoint}/${id}`,
+        'PUT',
+        body
+    );
+
+}
 
                 closeModal();
                 loadModule(currentModule);
@@ -1504,16 +1557,43 @@ async function getTeacherPassport() {
     }
 }
 
-    async function deleteItem(id) {
-        if (!confirm('Удалить запись?')) return;
-        const cfg = MODULES[currentModule];
-        try {
-            await api(`${cfg.crudEndpoint}/${id}`, 'DELETE');
-            loadModule(currentModule);
-        } catch (e) {
-            alert('Ошибка: ' + e.message);
+async function deleteItem(id) {
+
+    if (!confirm('Удалить запись?'))
+        return;
+
+    const cfg = MODULES[currentModule];
+
+    try {
+
+        if (
+            window.selectedTeacherId &&
+            currentModule === 'academic'
+        ) {
+
+            await api(
+                `/api/AcademicPerformance/teacher-item/${id}`,
+                'DELETE'
+            );
+
         }
+        else {
+
+            await api(
+                `${cfg.crudEndpoint}/${id}`,
+                'DELETE'
+            );
+
+        }
+
+        loadModule(currentModule);
+
+    } catch (e) {
+
+        alert('Ошибка: ' + e.message);
+
     }
+}
 
     function openModal(title, bodyHtml) {
         document.getElementById('modalTitle').innerText = title;

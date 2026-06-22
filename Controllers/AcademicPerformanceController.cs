@@ -271,4 +271,90 @@ public class AcademicPerformanceController : ControllerBase
         return File(content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             $"Успеваемость_{teacher.Lastname}_{DateTime.Now:yyyyMMdd}.xlsx");
     }
+
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher/{teacherId}")]
+    public async Task<IActionResult> GetTeacherAcademicPerformance(int teacherId)
+    {
+        var items = await _context.AcademicPerformances
+            .Include(x => x.AcademicYear)
+            .Where(x => x.TeacherId == teacherId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new AcademicPerformanceDto
+            {
+                Id = x.Id,
+                AcademicYearId = x.AcademicYearId,
+                AcademicYearName = x.AcademicYear.Name,
+                Discipline = x.Discipline,
+                GroupName = x.GroupName,
+                QualityPercent = x.QualityPercent,
+                SuccessPercent = x.SuccessPercent,
+                CreatedAt = x.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(items);
+    }
+
+    [Authorize(Roles = "Methodist")]
+    [HttpGet("teacher-item/{id}")]
+    public async Task<IActionResult> GetTeacherItem(int id)
+    {
+        var item = await _context.AcademicPerformances
+            .Include(x => x.AcademicYear)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound();
+
+        return Ok(new AcademicPerformanceDto
+        {
+            Id = item.Id,
+            AcademicYearId = item.AcademicYearId,
+            AcademicYearName = item.AcademicYear.Name,
+            Discipline = item.Discipline,
+            GroupName = item.GroupName,
+            QualityPercent = item.QualityPercent,
+            SuccessPercent = item.SuccessPercent,
+            CreatedAt = item.CreatedAt
+        });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpPut("teacher-item/{id}")]
+    public async Task<IActionResult> UpdateTeacherItem(
+    int id,
+    UpdateAcademicPerformanceRequest request)
+    {
+        var item = await _context.AcademicPerformances
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound("Запись не найдена");
+
+        item.AcademicYearId = request.AcademicYearId;
+        item.Discipline = request.Discipline;
+        item.GroupName = request.GroupName;
+        item.QualityPercent = request.QualityPercent;
+        item.SuccessPercent = request.SuccessPercent;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Данные обновлены" });
+    }
+    [Authorize(Roles = "Methodist")]
+    [HttpDelete("teacher-item/{id}")]
+    public async Task<IActionResult> DeleteTeacherItem(int id)
+    {
+        var item = await _context.AcademicPerformances
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (item == null)
+            return NotFound("Запись не найдена");
+
+        _context.AcademicPerformances.Remove(item);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Запись удалена" });
+    }
 }
